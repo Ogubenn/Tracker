@@ -12,7 +12,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::orderBy('created_at', 'desc')->get();
+        $users = User::latest()->get();
         return view('admin.users.index', compact('users'));
     }
 
@@ -23,20 +23,13 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'ad' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
-            'rol' => 'required|in:admin,personel',
-        ]);
-
+        $validated = $this->validateUser($request);
         $validated['password'] = Hash::make($validated['password']);
         $validated['aktif_mi'] = $request->has('aktif_mi');
 
         User::create($validated);
 
-        return redirect()->route('admin.users.index')
-            ->with('success', 'Kullanıcı başarıyla oluşturuldu.');
+        return $this->redirectWithSuccess('Kullanıcı başarıyla oluşturuldu.');
     }
 
     public function edit(User $user)
@@ -46,13 +39,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
-            'ad' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:6|confirmed',
-            'rol' => 'required|in:admin,personel',
-        ]);
-
+        $validated = $this->validateUser($request, $user);
+        
         if ($request->filled('password')) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
@@ -60,35 +48,63 @@ class UserController extends Controller
         }
 
         $validated['aktif_mi'] = $request->has('aktif_mi');
-
         $user->update($validated);
 
-        return redirect()->route('admin.users.index')
-            ->with('success', 'Kullanıcı başarıyla güncellendi.');
+        return $this->redirectWithSuccess('Kullanıcı başarıyla güncellendi.');
     }
 
     public function destroy(User $user)
     {
-        // Kendi hesabını silmeyi engelle
-        if ($user->id === auth()->id()) {
-            return redirect()->route('admin.users.index')
-                ->with('error', 'Kendi hesabınızı silemezsiniz.');
+        if ($this->isCurrentUser($user)) {
+            return $this->redirectWithError('Kendi hesabınızı silemezsiniz.');
         }
 
         $user->delete();
 
-        return redirect()->route('admin.users.index')
-            ->with('success', 'Kullanıcı başarıyla silindi.');
+        return $this->redirectWithSuccess('Kullanıcı başarıyla silindi.');
     }
     
-    /**
-     * QR görünürlüğünü değiştir
-     */
     public function toggleQrGorunur(User $user)
     {
-        $user->qr_gorunur = !$user->qr_gorunur;
-        $user->save();
+        $user->update(['qr_gorunur' => !$user->qr_gorunur]);
         
         return redirect()->back()->with('success', 'QR görünürlüğü güncellendi.');
+    }
+
+    public function toggleMailAlsin(User $user)
+    {
+        $user->update(['mail_alsin' => !$user->mail_alsin]);
+        
+        $durum = $user->mail_alsin ? 'açıldı' : 'kapatıldı';
+        return redirect()->back()->with('success', "Mail bildirimleri {$durum}.");
+    }
+
+    private function validateUser(Request $request, ?User $user = null): array
+    {
+        return $request->validate([
+            'ad' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                $user ? Rule::unique('users')->ignore($user->id) : 'unique:users,email'
+            ],
+            'password' => $user ? 'nullable|string|min:6|confirmed' : 'required|string|min:6|confirmed',
+            'rol' => 'required|in:admin,personel',
+        ]);
+    }
+
+    private function isCurrentUser(User $user): bool
+    {
+        return $user->id === auth()->id();
+    }
+
+    private function redirectWithSuccess(string $message)
+    {
+        return redirect()->route('admin.users.index')->with('success', $message);
+    }
+
+    private function redirectWithError(string $message)
+    {
+        return redirect()->route('admin.users.index')->with('error', $message);
     }
 }

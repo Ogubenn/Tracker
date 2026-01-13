@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\BinaController;
 use App\Http\Controllers\Admin\KontrolMaddesiController;
 use App\Http\Controllers\Admin\KontrolKaydiController;
+use App\Http\Controllers\Admin\MailAyarlariController;
 use App\Http\Controllers\Admin\RaporController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\PublicKontrolController;
@@ -31,6 +32,11 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+    
+    Route::get('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'showForgotForm'])->name('password.request');
+    Route::post('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'sendResetLink'])->name('password.email');
+    Route::get('/reset-password/{token}', [App\Http\Controllers\PasswordResetController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::class, 'resetPassword'])->name('password.update');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
@@ -46,6 +52,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Kullanıcılar
     Route::resource('users', UserController::class);
     Route::post('/users/{user}/toggle-qr', [UserController::class, 'toggleQrGorunur'])->name('users.toggle-qr');
+    Route::post('/users/{user}/toggle-mail', [UserController::class, 'toggleMailAlsin'])->name('users.toggle-mail');
+    
+    // Mail Ayarları
+    Route::get('/mail-ayarlari', [MailAyarlariController::class, 'index'])->name('mail-ayarlari.index');
+    Route::post('/mail-ayarlari', [MailAyarlariController::class, 'update'])->name('mail-ayarlari.update');
     
     // Binalar - Bulk delete ÖNCELİKLE tanımlanmalı
     Route::delete('/binalar/bulk-delete', [BinaController::class, 'bulkDestroy'])->name('binalar.bulk-delete');
@@ -70,6 +81,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     // Raporlar
     Route::get('/raporlar', [RaporController::class, 'index'])->name('raporlar.index');
+    Route::get('/raporlar/pdf', [RaporController::class, 'exportPdf'])->name('raporlar.pdf');
 });
 
 // Personel Routes

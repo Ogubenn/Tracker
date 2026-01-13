@@ -93,6 +93,11 @@
                             <i class="bi bi-file-earmark-text"></i> Raporlar
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.mail-ayarlari.*') ? 'active' : '' }}" href="{{ route('admin.mail-ayarlari.index') }}">
+                            <i class="bi bi-envelope-at"></i> Mail Ayarları
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>

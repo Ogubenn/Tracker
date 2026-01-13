@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class KontrolMaddesi extends Model
 {
@@ -27,131 +29,111 @@ class KontrolMaddesi extends Model
         'sira' => 'integer',
     ];
 
-    /**
-     * Kontrol maddesinin bağlı olduğu bina
-     */
-    public function bina()
+    private const PERIYOT_GUNLUK = 'gunluk';
+    private const PERIYOT_HAFTALIK = 'haftalik';
+    private const PERIYOT_15_GUN = '15_gun';
+    private const PERIYOT_AYLIK = 'aylik';
+
+    private const GUN_MAP = [
+        'monday' => 'pazartesi',
+        'tuesday' => 'sali',
+        'wednesday' => 'carsamba',
+        'thursday' => 'persembe',
+        'friday' => 'cuma',
+        'saturday' => 'cumartesi',
+        'sunday' => 'pazar',
+    ];
+
+    public function bina(): BelongsTo
     {
         return $this->belongsTo(Bina::class, 'bina_id');
     }
 
-    /**
-     * Kontrol maddesine ait kayıtlar
-     */
-    public function kontrolKayitlari()
+    public function kontrolKayitlari(): HasMany
     {
         return $this->hasMany(KontrolKaydi::class, 'kontrol_maddesi_id');
     }
 
-    /**
-     * Bugün için kontrol kaydı var mı?
-     */
     public function bugunKaydiVarMi(): bool
     {
-        return $this->kontrolKayitlari()
-            ->whereDate('tarih', Carbon::today())
-            ->exists();
+        return $this->tarihteKaydiVarMi(Carbon::today());
     }
 
-    /**
-     * Belirli bir tarih için kontrol kaydı var mı?
-     */
-    public function tarihteKaydiVarMi($tarih): bool
+    public function tarihteKaydiVarMi(Carbon $tarih): bool
     {
         return $this->kontrolKayitlari()
             ->whereDate('tarih', $tarih)
             ->exists();
     }
 
-    /**
-     * Bugün için kontrol kaydını getir
-     */
-    public function bugunKaydi()
+    public function bugunKaydi(): ?KontrolKaydi
     {
         return $this->kontrolKayitlari()
             ->whereDate('tarih', Carbon::today())
             ->first();
     }
 
-    /**
-     * Son kontrol kaydını getir
-     */
-    public function sonKayit()
+    public function sonKayit(): ?KontrolKaydi
     {
         return $this->kontrolKayitlari()
             ->latest('tarih')
             ->first();
     }
 
-    /**
-     * Scope: Sadece aktif kontrol maddelerini getir
-     */
     public function scopeAktif($query)
     {
         return $query->where('aktif_mi', true);
     }
 
-    /**
-     * Scope: Periyot tipine göre filtrele
-     */
-    public function scopePeriyot($query, $periyot)
+    public function scopePeriyot($query, string $periyot)
     {
         return $query->where('periyot', $periyot);
     }
 
-    /**
-     * Scope: Sıraya göre getir
-     */
     public function scopeSirali($query)
     {
         return $query->orderBy('sira');
     }
 
-    /**
-     * Bugün bu kontrol yapılmalı mı?
-     * Periyot mantığına göre karar verir
-     */
     public function bugunYapilmaliMi(): bool
     {
         $bugun = Carbon::today();
 
-        switch ($this->periyot) {
-            case 'gunluk':
-                // Her gün yapılmalı
-                return true;
+        return match($this->periyot) {
+            self::PERIYOT_GUNLUK => true,
+            self::PERIYOT_HAFTALIK => $this->isHaftalikGunToday($bugun),
+            self::PERIYOT_15_GUN => $this->is15GunGecti($bugun),
+            self::PERIYOT_AYLIK => $this->buAyYapildiMi($bugun),
+            default => false,
+        };
+    }
 
-            case 'haftalik':
-                // Sadece belirlenen gün yapılmalı
-                $gunAdi = strtolower($bugun->translatedFormat('l'));
-                $gunMap = [
-                    'monday' => 'pazartesi',
-                    'tuesday' => 'sali',
-                    'wednesday' => 'carsamba',
-                    'thursday' => 'persembe',
-                    'friday' => 'cuma',
-                    'saturday' => 'cumartesi',
-                    'sunday' => 'pazar',
-                ];
-                return isset($gunMap[$gunAdi]) && $gunMap[$gunAdi] === $this->haftalik_gun;
+    private function isHaftalikGunToday(Carbon $bugun): bool
+    {
+        $gunAdi = strtolower($bugun->translatedFormat('l'));
+        $turkceGun = self::GUN_MAP[$gunAdi] ?? null;
+        
+        return $turkceGun === $this->haftalik_gun;
+    }
 
-            case '15_gun':
-                // Son yapılan tarihten 15 gün geçmiş mi?
-                $sonKayit = $this->sonKayit();
-                if (!$sonKayit) {
-                    return true; // Hiç yapılmamış, yapılmalı
-                }
-                return $sonKayit->tarih->diffInDays($bugun) >= 15;
-
-            case 'aylik':
-                // Bu ay içinde yapılmış mı?
-                $buAyKayit = $this->kontrolKayitlari()
-                    ->whereYear('tarih', $bugun->year)
-                    ->whereMonth('tarih', $bugun->month)
-                    ->exists();
-                return !$buAyKayit; // Bu ay yapılmamışsa yapılmalı
-
-            default:
-                return false;
+    private function is15GunGecti(Carbon $bugun): bool
+    {
+        $sonKayit = $this->sonKayit();
+        
+        if (!$sonKayit) {
+            return true;
         }
+        
+        return $sonKayit->tarih->diffInDays($bugun) >= 15;
+    }
+
+    private function buAyYapildiMi(Carbon $bugun): bool
+    {
+        $buAyKayit = $this->kontrolKayitlari()
+            ->whereYear('tarih', $bugun->year)
+            ->whereMonth('tarih', $bugun->month)
+            ->exists();
+            
+        return !$buAyKayit;
     }
 }

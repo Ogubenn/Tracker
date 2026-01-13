@@ -8,72 +8,93 @@ use App\Models\KontrolMaddesi;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class PublicKontrolController extends Controller
 {
-    /**
-     * QR kod ile kontrol ekranı
-     */
-    public function index($uuid)
+    private const PERIYOT_GUNLUK = 'gunluk';
+    private const PERIYOT_HAFTALIK = 'haftalik';
+    private const PERIYOT_15_GUN = '15_gun';
+    private const PERIYOT_AYLIK = 'aylik';
+    
+    private const MAX_FILE_SIZE = 5120;
+
+    public function index(string $uuid)
     {
-        $bina = Bina::where('uuid', $uuid)->firstOrFail();
-        
-        // Aktif kullanıcılar (hem admin hem personel)
-        $personeller = User::where('aktif_mi', true)
-            ->where('qr_gorunur', true)
-            ->orderBy('rol', 'asc') // admin önce
-            ->orderBy('ad', 'asc')
-            ->get();
-        
-        // Bugünkü tarihi al
+        $bina = $this->findBinaByUuid($uuid);
+        $personeller = $this->getVisibleUsers();
         $bugun = Carbon::today();
-        
-        // Bu binaya ait aktif kontrol maddeleri
-        $kontrolMaddeleri = KontrolMaddesi::where('bina_id', $bina->id)
-            ->where('aktif_mi', true)
-            ->get()
-            ->filter(function ($madde) use ($bina, $bugun) {
-                // Bugün için kontrol gerekli mi?
-                return $this->kontrolGerekliMi($madde, $bina, $bugun);
-            });
+        $kontrolMaddeleri = $this->getRequiredKontrollerForToday($bina, $bugun);
         
         return view('public.kontrol', compact('bina', 'kontrolMaddeleri', 'personeller', 'bugun'));
     }
     
-    /**
-     * Kontrol kaydı oluştur
-     */
-    public function store(Request $request, $uuid)
+    public function store(Request $request, string $uuid)
     {
-        $bina = Bina::where('uuid', $uuid)->firstOrFail();
+        $bina = $this->findBinaByUuid($uuid);
+        $validated = $this->validateKontrolData($request);
         
-        $validated = $request->validate([
+        $genelDosyalar = $this->uploadFiles($request, $bina);
+        $this->saveKontrolKayitlari($validated, $bina, $genelDosyalar, $request->ip());
+        
+        return redirect()->back()->with('success', 'Kontrol kayıtları başarıyla oluşturuldu. Admin onayı bekleniyor.');
+    }
+    
+    private function findBinaByUuid(string $uuid): Bina
+    {
+        return Bina::where('uuid', $uuid)->firstOrFail();
+    }
+
+    private function getVisibleUsers()
+    {
+        return User::where('aktif_mi', true)
+            ->where('qr_gorunur', true)
+            ->orderBy('rol', 'asc')
+            ->orderBy('ad', 'asc')
+            ->get();
+    }
+
+    private function getRequiredKontrollerForToday(Bina $bina, Carbon $bugun)
+    {
+        return KontrolMaddesi::where('bina_id', $bina->id)
+            ->where('aktif_mi', true)
+            ->get()
+            ->filter(fn($madde) => $this->kontrolGerekliMi($madde, $bina, $bugun));
+    }
+
+    private function validateKontrolData(Request $request): array
+    {
+        return $request->validate([
             'personel_id' => 'required|exists:users,id',
             'kayitlar' => 'required|array',
             'kayitlar.*.kontrol_maddesi_id' => 'required|exists:kontrol_maddeleri,id',
             'kayitlar.*.girilen_deger' => 'nullable|string',
             'kayitlar.*.durum' => 'required|in:uygun,uygun_degil,duzeltme_gerekli',
             'genel_aciklama' => 'nullable|string',
-            'genel_dosyalar.*' => 'nullable|file|image|max:5120', // 5MB
+            'genel_dosyalar.*' => 'nullable|file|image|max:' . self::MAX_FILE_SIZE,
         ]);
-        
-        $ipAdresi = $request->ip();
-        $tarih = Carbon::today();
-        
-        // Genel dosyaları yükle
-        $genelDosyalar = [];
-        if ($request->hasFile('genel_dosyalar')) {
-            $files = $request->file('genel_dosyalar');
-            foreach ($files as $file) {
-                $path = $file->store(
-                    "kontrol_kayitlari/{$bina->bina_adi}/" . $tarih->format('Y-m-d'),
-                    'public'
-                );
-                $genelDosyalar[] = $path;
-            }
+    }
+
+    private function uploadFiles(Request $request, Bina $bina): array
+    {
+        if (!$request->hasFile('genel_dosyalar')) {
+            return [];
         }
-        
+
+        $uploadedFiles = [];
+        $tarih = Carbon::today()->format('Y-m-d');
+        $basePath = "kontrol_kayitlari/{$bina->bina_adi}/{$tarih}";
+
+        foreach ($request->file('genel_dosyalar') as $file) {
+            $uploadedFiles[] = $file->store($basePath, 'public');
+        }
+
+        return $uploadedFiles;
+    }
+
+    private function saveKontrolKayitlari(array $validated, Bina $bina, array $genelDosyalar, string $ipAddress): void
+    {
+        $tarih = Carbon::today();
+
         foreach ($validated['kayitlar'] as $kayit) {
             KontrolKaydi::create([
                 'bina_id' => $bina->id,
@@ -82,56 +103,59 @@ class PublicKontrolController extends Controller
                 'girilen_deger' => $kayit['girilen_deger'] ?? null,
                 'yapan_kullanici_id' => $validated['personel_id'],
                 'durum' => $kayit['durum'],
-                'aciklama' => $validated['genel_aciklama'] ?? null, // Genel açıklama her kayda
+                'aciklama' => $validated['genel_aciklama'] ?? null,
                 'onay_durumu' => 'bekliyor',
-                'ip_adresi' => $ipAdresi,
-                'dosyalar' => $genelDosyalar, // Genel fotoğraflar her kayda
+                'ip_adresi' => $ipAddress,
+                'dosyalar' => $genelDosyalar,
             ]);
         }
-        
-        return redirect()->back()->with('success', 'Kontrol kayıtları başarıyla oluşturuldu. Admin onayı bekleniyor.');
     }
     
-    /**
-     * Bugün bu kontrol gerekli mi?
-     */
-    private function kontrolGerekliMi($madde, $bina, $tarih)
+    private function kontrolGerekliMi(KontrolMaddesi $madde, Bina $bina, Carbon $tarih): bool
     {
-        // Bugün için zaten kayıt yapılmış mı?
-        $mevcutKayit = KontrolKaydi::where('bina_id', $bina->id)
-            ->where('kontrol_maddesi_id', $madde->id)
-            ->whereDate('tarih', $tarih)
-            ->exists();
-            
-        if ($mevcutKayit) {
+        if ($this->hasRecordForToday($madde, $bina, $tarih)) {
             return false;
         }
         
-        // Periyoda göre kontrol gerekli mi?
-        switch ($madde->periyot) {
-            case 'gunluk':
-                return true;
-            case 'haftalik':
-                // Son kayıt 7 günden eski mi?
-                $sonKayit = KontrolKaydi::where('bina_id', $bina->id)
-                    ->where('kontrol_maddesi_id', $madde->id)
-                    ->latest('tarih')
-                    ->first();
-                return !$sonKayit || $sonKayit->tarih->diffInDays($tarih) >= 7;
-            case '15_gun':
-                $sonKayit = KontrolKaydi::where('bina_id', $bina->id)
-                    ->where('kontrol_maddesi_id', $madde->id)
-                    ->latest('tarih')
-                    ->first();
-                return !$sonKayit || $sonKayit->tarih->diffInDays($tarih) >= 15;
-            case 'aylik':
-                $sonKayit = KontrolKaydi::where('bina_id', $bina->id)
-                    ->where('kontrol_maddesi_id', $madde->id)
-                    ->latest('tarih')
-                    ->first();
-                return !$sonKayit || $sonKayit->tarih->diffInMonths($tarih) >= 1;
-            default:
-                return false;
-        }
+        return $this->checkPeriyot($madde, $bina, $tarih);
+    }
+
+    private function hasRecordForToday(KontrolMaddesi $madde, Bina $bina, Carbon $tarih): bool
+    {
+        return KontrolKaydi::where('bina_id', $bina->id)
+            ->where('kontrol_maddesi_id', $madde->id)
+            ->whereDate('tarih', $tarih)
+            ->exists();
+    }
+
+    private function checkPeriyot(KontrolMaddesi $madde, Bina $bina, Carbon $tarih): bool
+    {
+        return match($madde->periyot) {
+            self::PERIYOT_GUNLUK => true,
+            self::PERIYOT_HAFTALIK => $this->isPeriyotDue($madde, $bina, $tarih, 7),
+            self::PERIYOT_15_GUN => $this->isPeriyotDue($madde, $bina, $tarih, 15),
+            self::PERIYOT_AYLIK => $this->isPeriyotDueInMonths($madde, $bina, $tarih, 1),
+            default => false,
+        };
+    }
+
+    private function isPeriyotDue(KontrolMaddesi $madde, Bina $bina, Carbon $tarih, int $days): bool
+    {
+        $sonKayit = $this->getLastRecord($madde, $bina);
+        return !$sonKayit || $sonKayit->tarih->diffInDays($tarih) >= $days;
+    }
+
+    private function isPeriyotDueInMonths(KontrolMaddesi $madde, Bina $bina, Carbon $tarih, int $months): bool
+    {
+        $sonKayit = $this->getLastRecord($madde, $bina);
+        return !$sonKayit || $sonKayit->tarih->diffInMonths($tarih) >= $months;
+    }
+
+    private function getLastRecord(KontrolMaddesi $madde, Bina $bina): ?KontrolKaydi
+    {
+        return KontrolKaydi::where('bina_id', $bina->id)
+            ->where('kontrol_maddesi_id', $madde->id)
+            ->latest('tarih')
+            ->first();
     }
 }

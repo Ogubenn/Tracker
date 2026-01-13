@@ -77,6 +77,14 @@
                                         <i class="bi bi-{{ $user->qr_gorunur ? 'eye' : 'eye-slash' }}"></i>
                                     </button>
                                 </form>
+
+                                <form action="{{ route('admin.users.toggle-mail', $user) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm {{ $user->mail_alsin ? 'btn-primary' : 'btn-outline-secondary' }}" 
+                                            title="{{ $user->mail_alsin ? 'Mail bildirimleri açık' : 'Mail bildirimleri kapalı' }}">
+                                        <i class="bi bi-{{ $user->mail_alsin ? 'envelope-check' : 'envelope-slash' }}"></i>
+                                    </button>
+                                </form>
                                 
                                 @if($user->id !== auth()->id())
                                     <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline" 

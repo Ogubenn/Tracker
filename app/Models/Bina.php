@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Bina extends Model
@@ -22,47 +23,32 @@ class Bina extends Model
         'aktif_mi' => 'boolean',
     ];
 
-    /**
-     * Boot method - UUID otomatik oluştur
-     */
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
 
-        static::creating(function ($bina) {
+        static::creating(function (self $bina) {
             if (empty($bina->uuid)) {
                 $bina->uuid = (string) Str::uuid();
             }
         });
     }
 
-    /**
-     * Binaya ait kontrol maddeleri
-     */
-    public function kontrolMaddeleri()
+    public function kontrolMaddeleri(): HasMany
     {
         return $this->hasMany(KontrolMaddesi::class, 'bina_id');
     }
 
-    /**
-     * Binaya ait kontrol kayıtları
-     */
-    public function kontrolKayitlari()
+    public function kontrolKayitlari(): HasMany
     {
         return $this->hasMany(KontrolKaydi::class, 'bina_id');
     }
 
-    /**
-     * Binaya ait aktif kontrol maddeleri
-     */
-    public function aktifKontrolMaddeleri()
+    public function aktifKontrolMaddeleri(): HasMany
     {
-        return $this->hasMany(KontrolMaddesi::class, 'bina_id')->where('aktif_mi', true);
+        return $this->kontrolMaddeleri()->where('aktif_mi', true);
     }
 
-    /**
-     * Scope: Sadece aktif binaları getir
-     */
     public function scopeAktif($query)
     {
         return $query->where('aktif_mi', true);

@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class KontrolKaydi extends Model
 {
@@ -34,82 +35,52 @@ class KontrolKaydi extends Model
         'dosyalar' => 'array',
     ];
 
-    /**
-     * Kaydın bağlı olduğu bina
-     */
-    public function bina()
+    public function bina(): BelongsTo
     {
         return $this->belongsTo(Bina::class, 'bina_id');
     }
 
-    /**
-     * Kaydın bağlı olduğu kontrol maddesi
-     */
-    public function kontrolMaddesi()
+    public function kontrolMaddesi(): BelongsTo
     {
         return $this->belongsTo(KontrolMaddesi::class, 'kontrol_maddesi_id');
     }
 
-    /**
-     * Kaydı yapan kullanıcı (personel)
-     */
-    public function yapanKullanici()
+    public function yapanKullanici(): BelongsTo
     {
         return $this->belongsTo(User::class, 'yapan_kullanici_id');
     }
 
-    /**
-     * Kaydı onaylayan admin
-     */
-    public function onaylayan()
+    public function onaylayan(): BelongsTo
     {
         return $this->belongsTo(User::class, 'onaylayan_id');
     }
 
-    /**
-     * Scope: Bugünkü kayıtlar
-     */
     public function scopeBugun($query)
     {
         return $query->whereDate('tarih', Carbon::today());
     }
 
-    /**
-     * Scope: Belirli tarih aralığındaki kayıtlar
-     */
-    public function scopeTarihAralik($query, $baslangic, $bitis)
+    public function scopeTarihAralik($query, Carbon $baslangic, Carbon $bitis)
     {
         return $query->whereBetween('tarih', [$baslangic, $bitis]);
     }
 
-    /**
-     * Scope: Belirli bir bina için kayıtlar
-     */
-    public function scopeBina($query, $binaId)
+    public function scopeBina($query, int $binaId)
     {
         return $query->where('bina_id', $binaId);
     }
 
-    /**
-     * Scope: Onay bekleyen kayıtlar
-     */
     public function scopeBekleyen($query)
     {
         return $query->where('onay_durumu', 'bekliyor');
     }
 
-    /**
-     * Scope: Onaylanmış kayıtlar
-     */
     public function scopeOnaylanan($query)
     {
         return $query->where('onay_durumu', 'onaylandi');
     }
 
-    /**
-     * Scope: Belirli bir kullanıcının kayıtları
-     */
-    public function scopeKullanici($query, $kullaniciId)
+    public function scopeKullanici($query, int $kullaniciId)
     {
         return $query->where('yapan_kullanici_id', $kullaniciId);
     }

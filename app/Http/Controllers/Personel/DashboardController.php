@@ -5,79 +5,104 @@ namespace App\Http\Controllers\Personel;
 use App\Http\Controllers\Controller;
 use App\Models\Bina;
 use App\Models\KontrolKaydi;
-use Illuminate\Http\Request;
+use App\Models\KontrolMaddesi;
 use Carbon\Carbon;
+use Exception;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(): View
     {
-        // Bugün yapılması gereken kontrolleri getir
         $binalar = Bina::aktif()
             ->with([
-                'aktifKontrolMaddeleri' => function ($query) {
-                    $query->where('aktif_mi', true)
-                        ->orderBy('sira');
-                }
+                'aktifKontrolMaddeleri' => fn($query) => $query->where('aktif_mi', true)->orderBy('sira')
             ])
             ->get();
 
-        // Her kontrol maddesi için bugün yapılmalı mı kontrolü yap
-        $bugunYapilacakKontroller = [];
-        
-        foreach ($binalar as $bina) {
-            foreach ($bina->aktifKontrolMaddeleri as $kontrolMaddesi) {
-                if ($kontrolMaddesi->bugunYapilmaliMi() && !$kontrolMaddesi->bugunKaydiVarMi()) {
-                    if (!isset($bugunYapilacakKontroller[$bina->id])) {
-                        $bugunYapilacakKontroller[$bina->id] = [
-                            'bina' => $bina,
-                            'kontroller' => []
-                        ];
-                    }
-
-                    $bugunYapilacakKontroller[$bina->id]['kontroller'][] = $kontrolMaddesi;
-                }
-            }
-        }
+        $bugunYapilacakKontroller = $this->groupPendingKontrollerByBina($binalar);
 
         return view('personel.dashboard', compact('bugunYapilacakKontroller'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'kontrol_maddesi_id' => 'required|exists:kontrol_maddeleri,id',
-            'girilen_deger' => 'required',
-        ]);
+        $validated = $this->validateKontrolData($request);
+
+        if ($this->hasExistingRecord($validated['kontrol_maddesi_id'])) {
+            return back()->with('error', 'Bu kontrol bugün zaten yapılmış!');
+        }
 
         try {
             DB::beginTransaction();
-
-            // Bugün için aynı kontrolün kaydı var mı kontrol et
-            $mevcutKayit = KontrolKaydi::where('kontrol_maddesi_id', $validated['kontrol_maddesi_id'])
-                ->whereDate('tarih', Carbon::today())
-                ->first();
-
-            if ($mevcutKayit) {
-                return back()->with('error', 'Bu kontrol bugün zaten yapılmış!');
-            }
-
-            KontrolKaydi::create([
-                'kontrol_maddesi_id' => $validated['kontrol_maddesi_id'],
-                'tarih' => Carbon::today(),
-                'girilen_deger' => $validated['girilen_deger'],
-                'yapan_kullanici_id' => Auth::id(),
-            ]);
-
+            $this->saveKontrolKaydi($validated);
             DB::commit();
 
             return back()->with('success', 'Kontrol başarıyla kaydedildi!');
-            
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Bir hata oluştu: ' . $e->getMessage());
         }
+    }
+
+    private function groupPendingKontrollerByBina($binalar): array
+    {
+        $bugunYapilacakKontroller = [];
+
+        foreach ($binalar as $bina) {
+            foreach ($bina->aktifKontrolMaddeleri as $kontrolMaddesi) {
+                if ($this->isKontrolPendingToday($kontrolMaddesi)) {
+                    $this->addKontrolToGroup($bugunYapilacakKontroller, $bina, $kontrolMaddesi);
+                }
+            }
+        }
+
+        return $bugunYapilacakKontroller;
+    }
+
+    private function isKontrolPendingToday(KontrolMaddesi $kontrolMaddesi): bool
+    {
+        return $kontrolMaddesi->bugunYapilmaliMi() && !$kontrolMaddesi->bugunKaydiVarMi();
+    }
+
+    private function addKontrolToGroup(array &$kontroller, Bina $bina, KontrolMaddesi $kontrolMaddesi): void
+    {
+        if (!isset($kontroller[$bina->id])) {
+            $kontroller[$bina->id] = [
+                'bina' => $bina,
+                'kontroller' => []
+            ];
+        }
+
+        $kontroller[$bina->id]['kontroller'][] = $kontrolMaddesi;
+    }
+
+    private function validateKontrolData(Request $request): array
+    {
+        return $request->validate([
+            'kontrol_maddesi_id' => 'required|exists:kontrol_maddeleri,id',
+            'girilen_deger' => 'required',
+        ]);
+    }
+
+    private function hasExistingRecord(int $kontrolMaddesiId): bool
+    {
+        return KontrolKaydi::where('kontrol_maddesi_id', $kontrolMaddesiId)
+            ->whereDate('tarih', Carbon::today())
+            ->exists();
+    }
+
+    private function saveKontrolKaydi(array $validated): void
+    {
+        KontrolKaydi::create([
+            'kontrol_maddesi_id' => $validated['kontrol_maddesi_id'],
+            'tarih' => Carbon::today(),
+            'girilen_deger' => $validated['girilen_deger'],
+            'yapan_kullanici_id' => Auth::id(),
+        ]);
     }
 }

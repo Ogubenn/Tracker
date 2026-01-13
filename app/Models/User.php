@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -10,11 +11,6 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'ad',
         'email',
@@ -22,23 +18,14 @@ class User extends Authenticatable
         'rol',
         'aktif_mi',
         'qr_gorunur',
+        'mail_alsin',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -46,44 +33,30 @@ class User extends Authenticatable
             'password' => 'hashed',
             'aktif_mi' => 'boolean',
             'qr_gorunur' => 'boolean',
+            'mail_alsin' => 'boolean',
         ];
     }
 
-    /**
-     * Name attribute accessor (ad sütunundan döner)
-     */
-    public function getNameAttribute()
+    public function getNameAttribute(): string
     {
         return $this->ad;
     }
 
-    /**
-     * Kullanıcının yaptığı kontrol kayıtları
-     */
-    public function kontrolKayitlari()
+    public function kontrolKayitlari(): HasMany
     {
         return $this->hasMany(KontrolKaydi::class, 'yapan_kullanici_id');
     }
 
-    /**
-     * Admin mi kontrolü
-     */
     public function isAdmin(): bool
     {
         return $this->rol === 'admin';
     }
 
-    /**
-     * Personel mi kontrolü
-     */
     public function isPersonel(): bool
     {
         return $this->rol === 'personel';
     }
 
-    /**
-     * Aktif mi kontrolü
-     */
     public function isActive(): bool
     {
         return $this->aktif_mi;

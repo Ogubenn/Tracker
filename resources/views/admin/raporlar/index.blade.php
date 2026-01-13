@@ -10,13 +10,26 @@
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="{{ route('admin.raporlar.index') }}" class="row g-3">
-            <div class="col-md-4">
-                <label for="tarih" class="form-label">Tarih</label>
-                <input type="date" class="form-control" id="tarih" name="tarih" value="{{ $tarih }}">
+            <div class="col-md-3">
+                <label for="tarih_baslangic" class="form-label">
+                    <i class="bi bi-calendar-event"></i> Başlangıç Tarihi
+                </label>
+                <input type="date" class="form-control" id="tarih_baslangic" name="tarih_baslangic" 
+                       value="{{ $tarihBaslangic }}" required>
             </div>
 
-            <div class="col-md-6">
-                <label for="bina_id" class="form-label">Bina</label>
+            <div class="col-md-3">
+                <label for="tarih_bitis" class="form-label">
+                    <i class="bi bi-calendar-check"></i> Bitiş Tarihi
+                </label>
+                <input type="date" class="form-control" id="tarih_bitis" name="tarih_bitis" 
+                       value="{{ $tarihBitis }}" required>
+            </div>
+
+            <div class="col-md-4">
+                <label for="bina_id" class="form-label">
+                    <i class="bi bi-building"></i> Bina
+                </label>
                 <select class="form-select" id="bina_id" name="bina_id">
                     <option value="">Seçiniz...</option>
                     <option value="all" {{ $binaId === 'all' ? 'selected' : '' }}>📊 Tümü</option>
@@ -33,6 +46,15 @@
                     <i class="bi bi-search"></i> Ara
                 </button>
             </div>
+
+            @if($kayitlar && $binaId)
+                <div class="col-md-12 text-end mt-3">
+                    <a href="{{ route('admin.raporlar.pdf', ['tarih_baslangic' => $tarihBaslangic, 'tarih_bitis' => $tarihBitis, 'bina_id' => $binaId]) }}" 
+                       class="btn btn-danger" target="_blank">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF Olarak İndir
+                    </a>
+                </div>
+            @endif
         </form>
     </div>
 </div>
@@ -40,7 +62,13 @@
 @if($kayitlar)
     <div class="card">
         <div class="card-header">
-            <h5 class="mb-0">{{ \Carbon\Carbon::parse($tarih)->format('d.m.Y') }} Tarihli Kontroller</h5>
+            <h5 class="mb-0">
+                @if($tarihBaslangic === $tarihBitis)
+                    {{ \Carbon\Carbon::parse($tarihBaslangic)->format('d.m.Y') }} Tarihli Kontroller
+                @else
+                    {{ \Carbon\Carbon::parse($tarihBaslangic)->format('d.m.Y') }} - {{ \Carbon\Carbon::parse($tarihBitis)->format('d.m.Y') }} Arası Kontroller
+                @endif
+            </h5>
         </div>
         <div class="card-body">
             @if($kayitlar->count() > 0)
