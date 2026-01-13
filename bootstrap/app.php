@@ -17,6 +17,21 @@ $app = new Illuminate\Foundation\Application(
 
 /*
 |--------------------------------------------------------------------------
+| Fix Public Path for Production
+|--------------------------------------------------------------------------
+|
+| Production sunucuda public path düzeltmesi.
+| DomPDF ServiceProvider yüklenmeden önce çalışmalı.
+|
+*/
+
+if (isset($_SERVER['DOCUMENT_ROOT']) && 
+    strpos($_SERVER['DOCUMENT_ROOT'], 'public_html') !== false) {
+    $app->usePublicPath(realpath($_SERVER['DOCUMENT_ROOT']));
+}
+
+/*
+|--------------------------------------------------------------------------
 | Bind Important Interfaces
 |--------------------------------------------------------------------------
 |

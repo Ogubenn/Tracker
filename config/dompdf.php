@@ -13,7 +13,10 @@ return [
     */
     'show_warnings' => false,   // Throw an Exception on warnings from dompdf
 
-    'public_path' => null,  // Override the public path if needed
+    // Production sunucu için public path
+    'public_path' => env('APP_ENV') === 'production' 
+        ? '/home/ogubenn/domains/xn--atksutakip-yub.com.tr/public_html'
+        : null,
 
     /*
      * Dejavu Sans font is missing glyphs for converted entities, turn it off if you need to show € and £.

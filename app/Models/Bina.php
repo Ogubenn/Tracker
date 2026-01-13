@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Str;
 
 class Bina extends Model
@@ -34,14 +35,19 @@ class Bina extends Model
         });
     }
 
+    public function alanlar(): HasMany
+    {
+        return $this->hasMany(\App\Models\Alan::class, 'bina_id');
+    }
+
     public function kontrolMaddeleri(): HasMany
     {
-        return $this->hasMany(KontrolMaddesi::class, 'bina_id');
+        return $this->hasMany(\App\Models\KontrolMaddesi::class, 'bina_id');
     }
 
     public function kontrolKayitlari(): HasMany
     {
-        return $this->hasMany(KontrolKaydi::class, 'bina_id');
+        return $this->hasMany(\App\Models\KontrolKaydi::class, 'bina_id');
     }
 
     public function aktifKontrolMaddeleri(): HasMany

@@ -52,7 +52,9 @@
                                 <td>{{ $madde->sira }}</td>
                                 <td><strong>{{ $madde->kontrol_adi }}</strong></td>
                                 <td>
-                                    <small class="text-muted">{{ $madde->bina ? $madde->bina->bina_adi : 'Bina Yok' }}</small>
+                                    <small class="text-muted">
+                                        {{ $madde->bina ? $madde->bina->bina_adi : 'Bina Yok' }}
+                                    </small>
                                 </td>
                                 <td>
                                     @if($madde->kontrol_tipi == 'checkbox')

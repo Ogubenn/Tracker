@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\KontrolKaydi;
 use App\Models\Bina;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 class RaporController extends Controller
 {
@@ -46,13 +47,28 @@ class RaporController extends Controller
             $tarihAralik .= ' - ' . Carbon::parse($tarihBitis)->format('d.m.Y');
         }
 
-        $pdf = Pdf::loadView('admin.raporlar.pdf', [
+        // DomPDF'i doğrudan kullan (Facade sorunu olmadan)
+        $options = new Options();
+        $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('fontDir', storage_path('fonts'));
+        $options->set('fontCache', storage_path('fonts'));
+        $options->set('tempDir', sys_get_temp_dir());
+        $options->set('chroot', base_path());
+        $options->set('defaultFont', 'DejaVu Sans');
+        
+        $dompdf = new Dompdf($options);
+        
+        // View'i HTML'e çevir
+        $html = view('admin.raporlar.pdf', [
             'kayitlar' => $kayitlar,
             'tarihAralik' => $tarihAralik,
             'secilenBina' => $secilenBina,
-        ]);
-
-        $pdf->setPaper('a4', 'portrait');
+        ])->render();
+        
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('a4', 'portrait');
+        $dompdf->render();
 
         $filename = 'Kontrol_Raporu_' . Carbon::parse($tarihBaslangic)->format('d-m-Y');
         if ($tarihBaslangic !== $tarihBitis) {
@@ -60,7 +76,10 @@ class RaporController extends Controller
         }
         $filename .= '.pdf';
 
-        return $pdf->download($filename);
+        // PDF'i indir
+        return response($dompdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     private function getAktifBinalar(): Collection
