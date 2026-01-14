@@ -1,6 +1,0 @@
-APP_ENV=production ekleyin veya değiştirin
-
-.env dosyasında şu satır olmalı:
-APP_ENV=production
-
-Şu an local diye olabilir, onu production yapın.
