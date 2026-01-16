@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\MailAyarlariController;
 use App\Http\Controllers\Admin\RaporController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\IstatistiklerController;
 use App\Http\Controllers\PublicKontrolController;
 use App\Http\Controllers\Personel\DashboardController as PersonelDashboard;
 use Illuminate\Support\Facades\Route;
@@ -331,10 +332,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/kontrol-maddeleri/bulk-delete', [KontrolMaddesiController::class, 'bulkDestroy'])->name('kontrol-maddeleri.bulk-delete');
     Route::resource('kontrol-maddeleri', KontrolMaddesiController::class)->parameters(['kontrol-maddeleri' => 'kontrol_maddesi']);
     
-    // İstatistikler
-    Route::get('/istatistikler', function() {
-        return view('admin.istatistikler.index');
-    })->name('istatistikler.index');
+    // Sayısal Veri Analizi
+    Route::get('/sayisal-analiz', [IstatistiklerController::class, 'sayisalAnaliz'])->name('sayisal-analiz');
     
     // Raporlar
     Route::get('/raporlar', [RaporController::class, 'index'])->name('raporlar.index');

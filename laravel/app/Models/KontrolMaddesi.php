@@ -15,7 +15,7 @@ class KontrolMaddesi extends Model
     protected $table = 'kontrol_maddeleri';
 
     protected $fillable = [
-        'bina_id',
+        'alan_id',
         'kontrol_adi',
         'kontrol_tipi',
         'birim',
@@ -46,6 +46,11 @@ class KontrolMaddesi extends Model
         'saturday' => 'cumartesi',
         'sunday' => 'pazar',
     ];
+
+    public function alan(): BelongsTo
+    {
+        return $this->belongsTo(Alan::class, 'alan_id');
+    }
 
     public function bina(): BelongsTo
     {

@@ -90,8 +90,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.istatistikler.*') ? 'active' : '' }}" href="{{ route('admin.istatistikler.index') }}" data-title="İstatistikler">
-                            <i class="bi bi-bar-chart-line"></i> <span class="nav-text">İstatistikler</span>
+                        <a class="nav-link {{ request()->routeIs('admin.sayisal-analiz') ? 'active' : '' }}" href="{{ route('admin.sayisal-analiz') }}" data-title="Sayısal Analiz">
+                            <i class="bi bi-graph-up-arrow"></i> <span class="nav-text">Sayısal Analiz</span>
                         </a>
                     </li>
                     <li class="nav-item">
