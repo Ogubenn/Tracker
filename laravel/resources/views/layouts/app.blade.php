@@ -109,6 +109,11 @@
                             <i class="bi bi-clock-history"></i> <span class="nav-text">Aktivite Logları</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.system-test.*') ? 'active' : '' }}" href="{{ route('admin.system-test.index') }}" data-title="Sistem Teşhisi">
+                            <i class="bi bi-heart-pulse"></i> <span class="nav-text">Sistem Teşhisi</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>

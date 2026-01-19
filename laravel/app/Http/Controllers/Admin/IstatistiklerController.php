@@ -21,14 +21,12 @@ class IstatistiklerController extends Controller
             $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
             $binaId = $request->get('bina_id');
 
-            // Sayısal kontrol maddeleri (alan üzerinden bina filtreleme)
+            // Sayısal kontrol maddeleri (doğrudan bina_id ile filtreleme)
             $sayisalMaddeler = KontrolMaddesi::where('kontrol_tipi', 'sayisal')
                 ->when($binaId, function($q) use ($binaId) {
-                    $q->whereHas('alan', function($q2) use ($binaId) {
-                        $q2->where('bina_id', $binaId);
-                    });
+                    $q->where('bina_id', $binaId);
                 })
-                ->with(['alan.bina'])
+                ->with('bina')
                 ->orderBy('kontrol_adi')
                 ->get();
 
@@ -42,7 +40,7 @@ class IstatistiklerController extends Controller
             $secilenMadde = null;
 
             if ($kontrolMaddesiId) {
-                $secilenMadde = KontrolMaddesi::with(['alan.bina'])->find($kontrolMaddesiId);
+                $secilenMadde = KontrolMaddesi::with('bina')->find($kontrolMaddesiId);
                 if ($secilenMadde) {
                     $analizData = $this->getSayisalAnalizData($kontrolMaddesiId, $startDate, $endDate);
                 }

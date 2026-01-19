@@ -35,7 +35,7 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
             ->action('Şifremi Sıfırla', $resetUrl)
             ->line('Bu bağlantı 60 dakika süreyle geçerlidir.')
             ->line('Eğer şifre sıfırlama talebinde bulunmadıysanız, bu e-postayı görmezden gelebilirsiniz.')
-            ->salutation('Saygılarımızla, ' . config('app.name') . ' Ekibi');
+            ->salutation('., ' . config('app.name') . ' Ekibi');
     }
 
     private function generateResetUrl(object $notifiable): string

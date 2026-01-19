@@ -15,7 +15,7 @@ class KontrolMaddesi extends Model
     protected $table = 'kontrol_maddeleri';
 
     protected $fillable = [
-        'alan_id',
+        'bina_id',
         'kontrol_adi',
         'kontrol_tipi',
         'birim',

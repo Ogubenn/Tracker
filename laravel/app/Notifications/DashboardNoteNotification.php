@@ -31,7 +31,7 @@ class DashboardNoteNotification extends Notification
             ->line('')
             ->line('Bu notu dashboard üzerinden görüntüleyebilirsiniz.')
             ->action('Panele Git', url('/admin'))
-            ->salutation('İyi çalışmalar,')
+            ->salutation('.,')
             ->salutation('Atıksu Takip Sistemi');
     }
 }

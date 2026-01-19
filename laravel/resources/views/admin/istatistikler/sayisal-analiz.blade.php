@@ -52,7 +52,7 @@
                     <option value="">Seçiniz...</option>
                     @foreach($sayisalMaddeler as $madde)
                         <option value="{{ $madde->id }}" {{ $kontrolMaddesiId == $madde->id ? 'selected' : '' }}>
-                            {{ $madde->kontrol_adi }} @if($madde->alan && $madde->alan->bina) ({{ $madde->alan->bina->bina_adi }}) @endif
+                            {{ $madde->kontrol_adi }} @if($madde->bina) ({{ $madde->bina->bina_adi }}) @endif
                         </option>
                     @endforeach
                 </select>
@@ -87,8 +87,8 @@
                 @if($secilenMadde->birim)
                     <span class="badge bg-primary ms-2">{{ $secilenMadde->birim }}</span>
                 @endif
-                @if($secilenMadde->alan && $secilenMadde->alan->bina)
-                    <span class="text-muted ms-2">• {{ $secilenMadde->alan->bina->bina_adi }}</span>
+                @if($secilenMadde->bina)
+                    <span class="text-muted ms-2">• {{ $secilenMadde->bina->bina_adi }}</span>
                 @endif
             </div>
         </div>

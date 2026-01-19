@@ -7,6 +7,9 @@ use App\Models\SiteAyarlari;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Artisan;
+use Exception;
 
 class MailAyarlariController extends Controller
 {
@@ -20,7 +23,18 @@ class MailAyarlariController extends Controller
             'toplu_rapor_saat' => SiteAyarlari::get('toplu_rapor_saat', '19:00'),
         ];
 
-        return view('admin.mail-ayarlari.index', compact('ayarlar'));
+        // SMTP ayarlarını .env'den oku
+        $smtpConfig = [
+            'mail_mailer' => config('mail.default'),
+            'mail_host' => config('mail.mailers.smtp.host'),
+            'mail_port' => config('mail.mailers.smtp.port'),
+            'mail_encryption' => config('mail.mailers.smtp.encryption'),
+            'mail_username' => config('mail.mailers.smtp.username'),
+            'mail_from_address' => config('mail.from.address'),
+            'mail_from_name' => config('mail.from.name'),
+        ];
+
+        return view('admin.mail-ayarlari.index', compact('ayarlar', 'smtpConfig'));
     }
 
     public function update(Request $request): RedirectResponse

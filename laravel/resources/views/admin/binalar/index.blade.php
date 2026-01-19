@@ -81,15 +81,21 @@
                                         </div>
                                     </td>
                                 </tr>
-                            
-                            <!-- QR Kod Modal -->
-                            <div class="modal fade" id="qrModal{{ $bina->id }}" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">{{ $bina->bina_adi }} - QR Kod</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- QR Kod Modalleri (Foreach Dışında) -->
+            @foreach($binalar as $bina)
+            <div class="modal fade" id="qrModal{{ $bina->id }}" tabindex="-1" aria-labelledby="qrModalLabel{{ $bina->id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="qrModalLabel{{ $bina->id }}">{{ $bina->bina_adi }} - QR Kod</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
                                         <div class="modal-body text-center">
                                             <div class="mb-3" id="qrcode{{ $bina->id }}">
                                                 {!! QrCode::size(300)->generate(route('public.kontrol.index', $bina->uuid)) !!}

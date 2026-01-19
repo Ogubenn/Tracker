@@ -58,13 +58,37 @@ class ActivityLogController extends Controller
     public function clear(Request $request)
     {
         $validated = $request->validate([
-            'days' => 'required|integer|min:1|max:365',
+            'clear_type' => 'required|in:older_than,date_range,all',
+            'days' => 'required_if:clear_type,older_than|nullable|integer|min:1|max:365',
+            'date_from' => 'required_if:clear_type,date_range|nullable|date',
+            'date_to' => 'required_if:clear_type,date_range|nullable|date|after_or_equal:date_from',
         ]);
 
-        $date = now()->subDays($validated['days']);
-        $count = ActivityLog::where('created_at', '<', $date)->delete();
+        $query = ActivityLog::query();
+        $message = '';
+
+        switch ($validated['clear_type']) {
+            case 'older_than':
+                $date = now()->subDays($validated['days']);
+                $query->where('created_at', '<', $date);
+                $message = $validated['days'] . ' günden eski ';
+                break;
+
+            case 'date_range':
+                $query->whereDate('created_at', '>=', $validated['date_from'])
+                      ->whereDate('created_at', '<=', $validated['date_to']);
+                $message = $validated['date_from'] . ' - ' . $validated['date_to'] . ' tarihleri arasındaki ';
+                break;
+
+            case 'all':
+                // Tüm kayıtlar silinecek
+                $message = 'Tüm ';
+                break;
+        }
+
+        $count = $query->delete();
 
         return redirect()->route('admin.activity-logs.index')
-            ->with('success', $count . ' adet eski log kaydı silindi.');
+            ->with('success', '✅ ' . $message . $count . ' adet log kaydı başarıyla silindi.');
     }
 }

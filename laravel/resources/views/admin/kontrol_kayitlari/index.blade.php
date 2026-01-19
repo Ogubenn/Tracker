@@ -1,5 +1,41 @@
 @extends('layouts.app')
 
+@push('styles')
+<style>
+.pagination-sm .page-link {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+}
+.pagination-sm .page-item:not(:first-child) .page-link {
+    margin-left: 0.25rem;
+}
+.pagination .page-link {
+    color: var(--primary);
+    border: 1px solid #dee2e6;
+    transition: all 0.2s;
+}
+.pagination .page-link:hover {
+    background-color: #f8f9fa;
+    color: var(--primary-dark);
+}
+.pagination .page-item.active .page-link {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+@media (max-width: 576px) {
+    .pagination-sm .page-link { padding: 0.3rem 0.6rem; font-size: 0.8125rem; }
+}
+</style>
+@endpush
+
 @section('content')
 <div class="page-header">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -254,9 +290,51 @@
                 @endif
             @endforeach
             
-            <div class="mt-3">
-                {{ $kayitlar->links() }}
-            </div>
+            <!-- Pagination -->
+            @if($kayitlar->hasPages())
+                <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3">
+                    <div class="text-muted small">
+                        Toplam <strong>{{ $kayitlar->total() }}</strong> kayıttan 
+                        <strong>{{ $kayitlar->firstItem() }}</strong> - <strong>{{ $kayitlar->lastItem() }}</strong> arası gösteriliyor
+                    </div>
+                    <nav aria-label="Sayfa navigasyonu">
+                        <ul class="pagination pagination-sm mb-0">
+                            {{-- Önceki --}}
+                            @if ($kayitlar->onFirstPage())
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                                </li>
+                            @else
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $kayitlar->appends(request()->query())->previousPageUrl() }}"><i class="bi bi-chevron-left"></i></a>
+                                </li>
+                            @endif
+
+                            {{-- Sayfa Numaraları --}}
+                            @foreach(range(1, $kayitlar->lastPage()) as $page)
+                                @if($page == $kayitlar->currentPage())
+                                    <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
+                                @elseif($page == 1 || $page == $kayitlar->lastPage() || abs($page - $kayitlar->currentPage()) <= 2)
+                                    <li class="page-item"><a class="page-link" href="{{ $kayitlar->appends(request()->query())->url($page) }}">{{ $page }}</a></li>
+                                @elseif(abs($page - $kayitlar->currentPage()) == 3)
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                @endif
+                            @endforeach
+
+                            {{-- Sonraki --}}
+                            @if ($kayitlar->hasMorePages())
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $kayitlar->appends(request()->query())->nextPageUrl() }}"><i class="bi bi-chevron-right"></i></a>
+                                </li>
+                            @else
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                                </li>
+                            @endif
+                        </ul>
+                    </nav>
+                </div>
+            @endif
         @endif
     </div>
 </div>

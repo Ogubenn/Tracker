@@ -17,7 +17,7 @@ class KontrolMaddesiController extends Controller
     {
         $kontrolMaddeleri = KontrolMaddesi::with('bina')
             ->orderBy('sira')
-            ->get();
+            ->paginate(15);
             
         return view('admin.kontrol_maddeleri.index', compact('kontrolMaddeleri'));
     }

@@ -74,6 +74,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cron Job Secret Key
+    |--------------------------------------------------------------------------
+    |
+    | This key is used to secure the external cron trigger route.
+    | External cron services must provide this key to execute scheduled tasks.
+    |
+    */
+
+    'cron_secret_key' => env('CRON_SECRET_KEY', 'atiksu_cron_2026_XkJ9mP4sQ7wL2nR8vT3hY6bN'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

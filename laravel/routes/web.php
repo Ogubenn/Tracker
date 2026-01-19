@@ -6,10 +6,12 @@ use App\Http\Controllers\Admin\BinaController;
 use App\Http\Controllers\Admin\KontrolMaddesiController;
 use App\Http\Controllers\Admin\KontrolKaydiController;
 use App\Http\Controllers\Admin\MailAyarlariController;
+use App\Http\Controllers\Admin\MailTestController;
 use App\Http\Controllers\Admin\RaporController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\IstatistiklerController;
+use App\Http\Controllers\Admin\SystemTestController;
 use App\Http\Controllers\PublicKontrolController;
 use App\Http\Controllers\Personel\DashboardController as PersonelDashboard;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +22,33 @@ use Illuminate\Support\Facades\Artisan;
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+// Cron Trigger Route (External Cron Services için)
+// Kullanım: https://siteniz.com/cron-trigger?key=GIZLI_ANAHTAR
+Route::get('/cron-trigger', function () {
+    $secretKey = env('CRON_SECRET_KEY', 'atiksu_cron_2026_secret');
+    
+    if (request('key') !== $secretKey) {
+        abort(403, 'Unauthorized cron access');
+    }
+    
+    try {
+        Artisan::call('schedule:run');
+        $output = Artisan::output();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Scheduled tasks executed successfully',
+            'output' => $output,
+            'timestamp' => now()->toDateTimeString()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
 
 // Migration route (sadece acil durumlar için, sonra silinmeli)
 Route::get('/migrate-run', function () {
@@ -315,6 +344,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/mail-ayarlari', [MailAyarlariController::class, 'index'])->name('mail-ayarlari.index');
     Route::post('/mail-ayarlari', [MailAyarlariController::class, 'update'])->name('mail-ayarlari.update');
     
+    // Mail Test Paneli
+    Route::get('/mail-test', [MailTestController::class, 'index'])->name('mail-test.index');
+    Route::post('/mail-test/smtp', [MailTestController::class, 'testSmtp'])->name('mail-test.smtp');
+    Route::post('/mail-test/scheduled', [MailTestController::class, 'testScheduledMail'])->name('mail-test.scheduled');
+    Route::post('/mail-test/cron', [MailTestController::class, 'testCron'])->name('mail-test.cron');
+    
     // Binalar - Bulk delete ÖNCELİKLE tanımlanmalı
     Route::delete('/binalar/bulk-delete', [BinaController::class, 'bulkDestroy'])->name('binalar.bulk-delete');
     Route::post('/binalar/{bina}/regenerate-qr', [BinaController::class, 'regenerateQr'])->name('binalar.regenerate-qr');
@@ -342,6 +377,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Aktivite Logları
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
     Route::delete('/activity-logs/clear', [ActivityLogController::class, 'clear'])->name('activity-logs.clear');
+    
+    // Sistem Teşhis Paneli
+    Route::get('/system-test', [SystemTestController::class, 'index'])->name('system-test.index');
+    Route::post('/system-test/authenticate', [SystemTestController::class, 'authenticate'])->name('system-test.authenticate');
+    Route::get('/system-test/logout', [SystemTestController::class, 'logout'])->name('system-test.logout');
+    Route::post('/system-test/clear-cache', [SystemTestController::class, 'clearCache'])->name('system-test.clear-cache');
 });
 
 // Personel Routes

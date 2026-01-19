@@ -53,6 +53,6 @@ class EksikKontrolBildirimi extends Notification implements ShouldQueue
             $mail->line('**Lütfen en kısa sürede bu kontrolleri tamamlayın.**');
         }
 
-        return $mail->salutation('Saygılarımızla, ' . config('app.name'));
+        return $mail->salutation('., ' . config('app.name'));
     }
 }

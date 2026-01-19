@@ -74,6 +74,6 @@ class TopluRaporBildirimi extends Notification implements ShouldQueue
 
         $mail->action('Detaylı Raporu Görüntüle', route('admin.raporlar.index', ['tarih' => $this->tarih]));
 
-        return $mail->salutation('Saygılarımızla, ' . config('app.name'));
+        return $mail->salutation('., ' . config('app.name'));
     }
 }
