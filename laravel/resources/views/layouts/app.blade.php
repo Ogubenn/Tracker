@@ -12,8 +12,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Atıksu Takip">
-    <link rel="apple-touch-icon" href="{{ asset('images/icon-192.png') }}">
-    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('images/icon-192.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo.jpg') }}">
+    <link rel="icon" type="image/jpeg" sizes="192x192" href="{{ asset('images/logo.jpg') }}">
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -33,7 +33,7 @@
                 @endif
             @endauth
             
-            <a class="navbar-brand" href="{{ auth()->check() && auth()->user()->isAdmin() ? route('admin.dashboard') : route('personel.dashboard') }}">
+            <a class="navbar-brand" href="{{ auth()->check() ? route('admin.dashboard') : route('login') }}">
                 <img src="{{ asset('images/logo.jpg') }}" alt="Bulancak Belediyesi" class="navbar-logo">
                 <div class="navbar-text">
                     <span class="navbar-title">Bulancak Belediyesi</span>
@@ -69,61 +69,107 @@
     </nav>
 
     @if(auth()->check() && auth()->user()->isAdmin())
-        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        <!-- Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        
+        <!-- Ana Menü -->
         <nav class="sidebar" id="sidebarMenu">
+            <div class="sidebar-header">
+                <h5><i class="bi bi-grid-3x3-gap"></i> Menü</h5>
+                <button class="sidebar-close" onclick="closeSidebar()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
             <div class="sidebar-content">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}" data-title="Dashboard">
-                            <i class="bi bi-speedometer2"></i> <span class="nav-text">Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}" data-title="Kullanıcılar">
-                            <i class="bi bi-people"></i> <span class="nav-text">Kullanıcılar</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.binalar.*') ? 'active' : '' }}" href="{{ route('admin.binalar.index') }}" data-title="Binalar">
-                            <i class="bi bi-building"></i> <span class="nav-text">Binalar</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.kontrol-maddeleri.*') ? 'active' : '' }}" href="{{ route('admin.kontrol-maddeleri.index') }}" data-title="Kontrol Maddeleri">
-                            <i class="bi bi-check2-square"></i> <span class="nav-text">Kontrol Maddeleri</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.kontrol-kayitlari.*') ? 'active' : '' }}" href="{{ route('admin.kontrol-kayitlari.index') }}" data-title="Kontrol Kayıtları">
-                            <i class="bi bi-clipboard-check"></i> <span class="nav-text">Kontrol Kayıtları</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.sayisal-analiz') ? 'active' : '' }}" href="{{ route('admin.sayisal-analiz') }}" data-title="Sayısal Analiz">
-                            <i class="bi bi-graph-up-arrow"></i> <span class="nav-text">Sayısal Analiz</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.raporlar.*') ? 'active' : '' }}" href="{{ route('admin.raporlar.index') }}" data-title="Raporlar">
-                            <i class="bi bi-file-earmark-text"></i> <span class="nav-text">Raporlar</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.mail-ayarlari.*') ? 'active' : '' }}" href="{{ route('admin.mail-ayarlari.index') }}" data-title="Mail Ayarları">
-                            <i class="bi bi-envelope-at"></i> <span class="nav-text">Mail Ayarları</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}" href="{{ route('admin.activity-logs.index') }}" data-title="Aktivite Logları">
-                            <i class="bi bi-clock-history"></i> <span class="nav-text">Aktivite Logları</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.system-test.*') ? 'active' : '' }}" href="{{ route('admin.system-test.index') }}" data-title="Sistem Teşhisi">
-                            <i class="bi bi-heart-pulse"></i> <span class="nav-text">Sistem Teşhisi</span>
-                        </a>
-                    </li>
-                </ul>
+                <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
+                    <i class="bi bi-speedometer2 nav-icon"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
+                    <i class="bi bi-people nav-icon"></i>
+                    <span class="nav-text">Kullanıcılar</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.binalar.*') ? 'active' : '' }}" href="{{ route('admin.binalar.index') }}">
+                    <i class="bi bi-building nav-icon"></i>
+                    <span class="nav-text">Binalar</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.kontrol-maddeleri.*') ? 'active' : '' }}" href="{{ route('admin.kontrol-maddeleri.index') }}">
+                    <i class="bi bi-check2-square nav-icon"></i>
+                    <span class="nav-text">Kontrol Maddeleri</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.kontrol-kayitlari.*') ? 'active' : '' }}" href="{{ route('admin.kontrol-kayitlari.index') }}">
+                    <i class="bi bi-clipboard-check nav-icon"></i>
+                    <span class="nav-text">Kontrol Kayıtları</span>
+                </a>
+                
+                <!-- LABORATUVAR - NESTED MENU -->
+                <a class="nav-link has-submenu {{ request()->routeIs('admin.laboratuvar.*') ? 'active' : '' }}" onclick="toggleSubmenu(this, event)">
+                    <i class="bi bi-droplet-half nav-icon"></i>
+                    <span class="nav-text">Laboratuvar</span>
+                </a>
+                <div class="submenu">
+                    <a class="nav-link {{ request()->routeIs('admin.laboratuvar.index') ||  request()->routeIs('admin.laboratuvar.create') || request()->routeIs('admin.laboratuvar.show') || request()->routeIs('admin.laboratuvar.edit') ? 'active' : '' }}" href="{{ route('admin.laboratuvar.index') }}">
+                        <i class="bi bi-list-ul nav-icon"></i>
+                        <span class="nav-text">Raporlar</span>
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('admin.laboratuvar.grafikler') ? 'active' : '' }}" href="{{ route('admin.laboratuvar.grafikler') }}">
+                        <i class="bi bi-graph-up nav-icon"></i>
+                        <span class="nav-text">Grafikler</span>
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('admin.laboratuvar.excel-import') ? 'active' : '' }}" href="{{ route('admin.laboratuvar.excel-import') }}">
+                        <i class="bi bi-file-earmark-excel nav-icon"></i>
+                        <span class="nav-text">Excel İçe Aktar</span>
+                    </a>
+                </div>
+                
+                <a class="nav-link {{ request()->routeIs('admin.kontroller.gecmis-tarih*') ? 'active' : '' }}" href="{{ route('admin.kontroller.gecmis-tarih') }}">
+                    <i class="bi bi-calendar-week nav-icon"></i>
+                    <span class="nav-text">Geçmiş Tarihli Kontrol</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.personel-devam.*') ? 'active' : '' }}" href="{{ route('admin.personel-devam.index') }}">
+                    <i class="bi bi-person-check nav-icon"></i>
+                    <span class="nav-text">Personel Devam</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.is-takvimi.*') ? 'active' : '' }}" href="{{ route('admin.is-takvimi.index') }}">
+                    <i class="bi bi-calendar-check nav-icon"></i>
+                    <span class="nav-text">Aylık İş Takvimi</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.sayisal-analiz') ? 'active' : '' }}" href="{{ route('admin.sayisal-analiz') }}">
+                    <i class="bi bi-graph-up-arrow nav-icon"></i>
+                    <span class="nav-text">Sayısal Analiz</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.raporlar.*') ? 'active' : '' }}" href="{{ route('admin.raporlar.index') }}">
+                    <i class="bi bi-file-earmark-text nav-icon"></i>
+                    <span class="nav-text">Raporlar</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.arsivlenmis-isler.*') ? 'active' : '' }}" href="{{ route('admin.arsivlenmis-isler.index') }}">
+                    <i class="bi bi-archive nav-icon"></i>
+                    <span class="nav-text">Arşivlenmiş İşler</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.mail-ayarlari.*') ? 'active' : '' }}" href="{{ route('admin.mail-ayarlari.index') }}">
+                    <i class="bi bi-envelope-at nav-icon"></i>
+                    <span class="nav-text">Mail Ayarları</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}" href="{{ route('admin.activity-logs.index') }}">
+                    <i class="bi bi-clock-history nav-icon"></i>
+                    <span class="nav-text">Aktivite Logları</span>
+                </a>
+                
+                <a class="nav-link {{ request()->routeIs('admin.system-test.*') ? 'active' : '' }}" href="{{ route('admin.system-test.index') }}">
+                    <i class="bi bi-heart-pulse nav-icon"></i>
+                    <span class="nav-text">Sistem Teşhisi</span>
+                </a>
             </div>
         </nav>
         
@@ -143,103 +189,75 @@
     <script>
         const isMobile = () => window.innerWidth <= 991;
         
+        // Ana menüyü aç/kapat
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebarMenu');
             const overlay = document.getElementById('sidebarOverlay');
             const body = document.body;
-            const mainContent = document.querySelector('.main-content');
             
-            if (isMobile()) {
-                // Mobile: Overlay mode
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
-                body.classList.toggle('sidebar-open');
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+            
+            if (sidebar.classList.contains('show')) {
+                body.classList.add('sidebar-open');
             } else {
-                // Desktop: Collapsed mode
-                sidebar.classList.toggle('collapsed');
-                mainContent.classList.toggle('sidebar-collapsed');
-                
-                // LocalStorage'a kaydet
-                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                body.classList.remove('sidebar-open');
             }
         }
         
-        // Tooltip sistemi
-        function initTooltips() {
-            const navLinks = document.querySelectorAll('.sidebar.collapsed .nav-link');
-            navLinks.forEach(link => {
-                const tooltip = document.createElement('div');
-                tooltip.className = 'sidebar-tooltip';
-                tooltip.textContent = link.getAttribute('data-title');
-                link.appendChild(tooltip);
+        // Ana menüyü kapat
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('sidebarOverlay');
+            const body = document.body;
+            
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+            body.classList.remove('sidebar-open');
+        }
+        
+        // Submenu toggle
+        function toggleSubmenu(element, event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const submenu = element.nextElementSibling;
+            const isExpanded = element.classList.contains('expanded');
+            
+            // Tüm diğer submenu'leri kapat
+            document.querySelectorAll('.has-submenu.expanded').forEach(item => {
+                if (item !== element) {
+                    item.classList.remove('expanded');
+                    item.nextElementSibling.classList.remove('expanded');
+                }
             });
-        }
-        
-        function removeTooltips() {
-            document.querySelectorAll('.sidebar-tooltip').forEach(t => t.remove());
-        }
-        
-        // Sidebar state observer
-        let tooltipInitialized = false;
-        const sidebar = document.getElementById('sidebarMenu');
-        const observer = new MutationObserver(() => {
-            if (sidebar.classList.contains('collapsed') && !isMobile()) {
-                if (!tooltipInitialized) {
-                    setTimeout(initTooltips, 50);
-                    tooltipInitialized = true;
-                }
+            
+            // Bu submenu'yu toggle et
+            if (isExpanded) {
+                element.classList.remove('expanded');
+                submenu.classList.remove('expanded');
             } else {
-                removeTooltips();
-                tooltipInitialized = false;
+                element.classList.add('expanded');
+                submenu.classList.add('expanded');
             }
-        });
+        }
         
+        // DOM yüklendiğinde event listener ekle
         document.addEventListener('DOMContentLoaded', function() {
-            const mainContent = document.querySelector('.main-content');
-            
-            if (isMobile()) {
-                // Mobile: Kapalı başla
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-            } else {
-                // Desktop: LocalStorage'dan oku
-                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                if (isCollapsed) {
-                    sidebar.classList.add('collapsed');
-                    mainContent.classList.add('sidebar-collapsed');
-                    setTimeout(initTooltips, 100);
-                    tooltipInitialized = true;
-                }
+            const overlay = document.getElementById('sidebarOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
             }
             
-            // Observer başlat
-            observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-        });
-        
-        // Window resize handling
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                const mainContent = document.querySelector('.main-content');
-                
-                if (isMobile()) {
-                    sidebar.classList.remove('collapsed');
-                    mainContent.classList.remove('sidebar-collapsed');
-                    overlay.classList.remove('show');
-                    sidebar.classList.remove('show');
-                    removeTooltips();
-                    tooltipInitialized = false;
-                } else {
-                    overlay.classList.remove('show');
-                    document.body.classList.remove('sidebar-open');
-                    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                    if (isCollapsed && !tooltipInitialized) {
-                        setTimeout(initTooltips, 100);
-                        tooltipInitialized = true;
-                    }
+            // Aktif submenu'yu aç
+            const activeSubmenuLink = document.querySelector('.submenu .nav-link.active');
+            if (activeSubmenuLink) {
+                const parentLink = activeSubmenuLink.closest('.submenu').previousElementSibling;
+                if (parentLink && parentLink.classList.contains('has-submenu')) {
+                    parentLink.classList.add('expanded');
+                    parentLink.nextElementSibling.classList.add('expanded');
                 }
-            }, 250);
+            }
         });
     </script>
     @endif

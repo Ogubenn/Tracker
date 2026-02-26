@@ -97,7 +97,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
                         </div>
                                         <div class="modal-body text-center">
-                                            <div class="mb-3" id="qrcode{{ $bina->id }}">
+                                            <div class="mb-3" id="qrcode{{ $bina->id }}" data-bina-name="{{ $bina->bina_adi }}">
                                                 {!! QrCode::size(300)->generate(route('public.kontrol.index', $bina->uuid)) !!}
                                             </div>
                                             <p class="text-muted">Bu QR kodu okutarak kontrol kaydı girebilirsiniz</p>
@@ -204,7 +204,8 @@
                 <div class="d-flex gap-1">
                     <button type="button" class="btn btn-info btn-sm flex-fill" 
                             data-bs-toggle="modal" 
-                            data-bs-target="#qrModal{{ $bina->id }}">
+                            data-bs-target="#qrModal{{ $bina->id }}"
+                            onclick="event.stopPropagation();">
                         <i class="bi bi-qr-code"></i> QR
                     </button>
                     <a href="{{ route('admin.binalar.edit', $bina) }}" class="btn btn-warning btn-sm flex-fill">
@@ -225,7 +226,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body text-center">
-                        <div class="mb-3" id="qrcode{{ $bina->id }}">
+                        <div class="mb-3" id="qrcode{{ $bina->id }}" data-bina-name="{{ $bina->bina_adi }}">
                             {!! QrCode::size(300)->generate(route('public.kontrol.index', $bina->uuid)) !!}
                         </div>
                         <p class="text-muted">Bu QR kodu okutarak kontrol kaydı girebilirsiniz</p>
@@ -351,18 +352,141 @@ function deleteSingle(id, name) {
 // QR Yazdırma
 function printQR(binaId) {
     const qrElement = document.getElementById('qrcode' + binaId);
-    const printWindow = window.open('', '', 'width=800,height=600');
-    printWindow.document.write('<html><head><title>QR Kod</title>');
-    printWindow.document.write('<style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(qrElement.innerHTML);
-    printWindow.document.write('</body></html>');
+    const binaName = qrElement.getAttribute('data-bina-name');
+    const qrSvg = qrElement.querySelector('svg');
+    
+    const printWindow = window.open('', '', 'width=900,height=900');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>QR Kod - ${binaName}</title>
+            <style>
+                @page {
+                    size: A4;
+                    margin: 2cm;
+                }
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                body {
+                    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    padding: 2cm;
+                    background: white;
+                }
+                .container {
+                    text-align: center;
+                    width: 100%;
+                    max-width: 600px;
+                }
+                .header {
+                    margin-bottom: 40px;
+                }
+                .logo {
+                    margin-bottom: 20px;
+                }
+                .logo-text {
+                    font-size: 20px;
+                    color: #d9041e;
+                    font-weight: 700;
+                    margin-bottom: 5px;
+                }
+                .logo-subtitle {
+                    font-size: 14px;
+                    color: #666;
+                    font-weight: 500;
+                }
+                h1 {
+                    font-size: 42px;
+                    font-weight: 800;
+                    color: #111827;
+                    margin: 30px 0 20px 0;
+                    line-height: 1.2;
+                    text-transform: uppercase;
+                    letter-spacing: -0.5px;
+                }
+                .qr-container {
+                    background: white;
+                    padding: 30px;
+                    border-radius: 20px;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+                    margin: 20px auto;
+                    display: inline-block;
+                }
+                .qr-container svg {
+                    width: 400px !important;
+                    height: 400px !important;
+                    display: block;
+                }
+                .description {
+                    font-size: 18px;
+                    color: #4B5563;
+                    margin-top: 30px;
+                    font-weight: 500;
+                    line-height: 1.6;
+                }
+                .footer {
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 2px solid #E5E7EB;
+                    color: #9CA3AF;
+                    font-size: 14px;
+                }
+                @media print {
+                    body {
+                        padding: 0;
+                    }
+                    .container {
+                        max-width: 100%;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="logo">
+                        <div class="logo-text">BULANCAK BELEDİYESİ</div>
+                        <div class="logo-subtitle">Atıksu Takip Sistemi</div>
+                    </div>
+                    <h1>${binaName}</h1>
+                </div>
+                
+                <div class="qr-container">
+                    ${qrSvg.outerHTML}
+                </div>
+                
+                <p class="description">
+                    Bu QR kodu okutarak kontrol kaydı girebilirsiniz
+                </p>
+                
+                <div class="footer">
+                    <p>QR kod ile kolayca erişim sağlayabilirsiniz</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `);
+    
     printWindow.document.close();
     printWindow.focus();
+    
+    // Yazdırma diyaloğunu aç
     setTimeout(() => {
         printWindow.print();
-        printWindow.close();
-    }, 250);
+        // Kullanıcı yazdırma işlemini iptal ederse de pencere kapansın
+        setTimeout(() => {
+            printWindow.close();
+        }, 100);
+    }, 500);
 }
 </script>
 @endpush

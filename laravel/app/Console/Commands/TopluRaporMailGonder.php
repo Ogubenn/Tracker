@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Bina;
+use App\Models\IsTakvimi;
 use App\Models\KontrolKaydi;
 use App\Models\SiteAyarlari;
 use App\Models\User;
@@ -39,9 +40,17 @@ class TopluRaporMailGonder extends Command
         $tarih = Carbon::today()->format('d.m.Y');
         $tamamlananKontroller = $this->getTamamlananKontroller();
         $eksikKontroller = $this->kontrolService->getEksikKontroller();
+        
+        // İş Takvimi bilgilerini ekle
+        $isTakvimi = $this->getIsTakvimiVerileri();
 
         foreach ($adminler as $admin) {
-            $admin->notify(new TopluRaporBildirimi($tamamlananKontroller, $eksikKontroller, $tarih));
+            $admin->notify(new TopluRaporBildirimi(
+                $tamamlananKontroller, 
+                $eksikKontroller, 
+                $tarih,
+                $isTakvimi
+            ));
         }
 
         $this->info($adminler->count() . ' kullanıcıya günlük rapor gönderildi.');
@@ -70,5 +79,51 @@ class TopluRaporMailGonder extends Command
                     'yapan' => $kayit->yapanKullanici->ad,
                 ];
             });
+    }
+
+    private function getIsTakvimiVerileri(): array
+    {
+        $bugun = Carbon::today();
+        
+        // Bugünkü tüm işler
+        $bugunIsler = IsTakvimi::where('tarih', $bugun->toDateString())
+            ->with(['atananKullanici', 'atananKullanicilar'])
+            ->get();
+
+        $tamamlanan = [];
+        $tamamlanmamis = [];
+
+        foreach ($bugunIsler as $is) {
+            $atananlar = [];
+            
+            try {
+                if (method_exists($is, 'atananKullanicilar') && $is->atananKullanicilar->count() > 0) {
+                    $atananlar = $is->atananKullanicilar->pluck('ad')->toArray();
+                } elseif ($is->atananKullanici) {
+                    $atananlar = [$is->atananKullanici->ad];
+                }
+            } catch (\Exception $e) {
+                \Log::error('İş takvimi rapor hatası: ' . $e->getMessage());
+            }
+
+            $isData = [
+                'baslik' => $is->baslik,
+                'atananlar' => !empty($atananlar) ? implode(', ', $atananlar) : 'Atanmamış',
+                'renk_kategori' => $is->renk_kategori === 'gece' ? 'Gece' : 'Normal',
+                'tekrarli_mi' => $is->tekrarli_mi,
+            ];
+
+            if ($is->durum === 'tamamlandi') {
+                $tamamlanan[] = $isData;
+            } else {
+                $tamamlanmamis[] = $isData;
+            }
+        }
+
+        return [
+            'tamamlanan' => $tamamlanan,
+            'tamamlanmamis' => $tamamlanmamis,
+            'toplam' => count($bugunIsler),
+        ];
     }
 }

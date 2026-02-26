@@ -23,7 +23,7 @@
 
 <!-- İstatistik Kartları -->
 <div class="row g-2 g-md-3 mb-3">
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-2">
         <div class="stat-card-mini">
             <div class="stat-icon blue">
                 <i class="bi bi-building"></i>
@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-2">
         <div class="stat-card-mini">
             <div class="stat-icon purple">
                 <i class="bi bi-check2-square"></i>
@@ -47,7 +47,7 @@
         </div>
     </div>
 
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-2">
         <div class="stat-card-mini">
             <div class="stat-icon green">
                 <i class="bi bi-people"></i>
@@ -59,7 +59,7 @@
         </div>
     </div>
 
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-2">
         <div class="stat-card-mini">
             <div class="stat-icon {{ $bugunYapilanKontroller > 0 ? 'orange' : 'gray' }}">
                 <i class="bi bi-calendar-check"></i>
@@ -70,11 +70,37 @@
             </div>
         </div>
     </div>
+
+    <!-- Laboratuvar Kartları -->
+    <div class="col-6 col-md-2">
+        <div class="stat-card-mini">
+            <div class="stat-icon" style="background: #e7f3ff; color: #0066cc;">
+                <i class="bi bi-droplet-half"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Lab Raporları</div>
+                <div class="stat-value">{{ $laboratuvarStats['toplam_rapor'] }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-2">
+        <div class="stat-card-mini">
+            <div class="stat-icon" style="background: {{ $laboratuvarStats['uygunluk_yuzdesi'] >= 80 ? '#e7ffe7' : '#ffe7e7' }}; color: {{ $laboratuvarStats['uygunluk_yuzdesi'] >= 80 ? '#00aa00' : '#cc0000' }};">
+                <i class="bi bi-graph-up"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Uygunluk</div>
+                <div class="stat-value">{{ $laboratuvarStats['uygunluk_yuzdesi'] }}%</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row g-3">
-    <!-- Sol Kolon: Takvim -->
+    <!-- Sol Kolon: Takvim + Laboratuvar -->
     <div class="col-lg-5">
+        <!-- Takvim -->
         <div class="content-card">
             <div class="content-card-header">
                 <h5 class="mb-0"><i class="bi bi-calendar3 me-2"></i>{{ $calendar['monthName'] }}</h5>
@@ -125,6 +151,72 @@
                         <span class="legend-text">Eksik/Uygunsuz</span>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Laboratuvar Özet - Kompakt -->
+        <div class="content-card mt-3">
+            <div class="content-card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 small"><i class="bi bi-droplet-half me-2"></i>Laboratuvar</h5>
+                <div class="d-flex gap-1">
+                    <a href="{{ route('admin.laboratuvar.grafikler') }}" class="btn btn-xs btn-info" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">
+                        <i class="bi bi-graph-up"></i>
+                    </a>
+                    <a href="{{ route('admin.laboratuvar.index') }}" class="btn btn-xs btn-outline-primary" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">
+                        Tümü
+                    </a>
+                </div>
+            </div>
+            <div class="content-card-body p-2">
+                <div class="row g-1 mb-2">
+                    <div class="col-3">
+                        <div class="p-1 rounded text-center" style="background: #e7f3ff;">
+                            <div class="fw-bold text-primary small">{{ $laboratuvarStats['toplam_rapor'] }}</div>
+                            <div style="font-size: 0.65rem; color: #666;">Rapor</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-1 rounded text-center" style="background: #e7ffe7;">
+                            <div class="fw-bold text-success small">{{ $laboratuvarStats['uygun_parametre'] }}</div>
+                            <div style="font-size: 0.65rem; color: #666;">Uygun</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-1 rounded text-center" style="background: #ffe7e7;">
+                            <div class="fw-bold text-danger small">{{ $laboratuvarStats['uygun_degil_parametre'] }}</div>
+                            <div style="font-size: 0.65rem; color: #666;">Uyg.Değil</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-1 rounded text-center" style="background: {{ $laboratuvarStats['uygunluk_yuzdesi'] >= 80 ? '#e7ffe7' : '#ffe7e7' }};">
+                            <div class="fw-bold small" style="color: {{ $laboratuvarStats['uygunluk_yuzdesi'] >= 80 ? '#00aa00' : '#cc0000' }};">{{ $laboratuvarStats['uygunluk_yuzdesi'] }}%</div>
+                            <div style="font-size: 0.65rem; color: #666;">Oran</div>
+                        </div>
+                    </div>
+                </div>
+                
+                @if($laboratuvarStats['son_raporlar']->count() > 0)
+                    <div class="small">
+                        <strong class="text-muted" style="font-size: 0.75rem;">Son Raporlar:</strong>
+                        @foreach($laboratuvarStats['son_raporlar']->take(3) as $rapor)
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom" style="font-size: 0.75rem;">
+                                <div class="text-truncate" style="max-width: 60%;">
+                                    <span class="text-primary fw-bold">{{ $rapor->rapor_no }}</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary" style="font-size: 0.65rem;">{{ $rapor->parametreler->count() }}</span>
+                                    <a href="{{ route('admin.laboratuvar.show', $rapor->id) }}" class="btn btn-xs btn-outline-primary ms-1" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center text-muted" style="font-size: 0.75rem; padding: 1rem 0;">
+                        <i class="bi bi-droplet"></i> Henüz rapor yok
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -217,6 +309,64 @@
                 @endif
             </div>
         </div>
+        
+        <!-- Bugünkü İşler Widget'ı (Fotoğrafların Altına Taşındı) -->
+        <div class="content-card mt-3">
+            <div class="content-card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Bugünkü İşler</h5>
+                <a href="{{ route('admin.is-takvimi.index') }}" class="btn btn-sm btn-outline-primary">
+                    Takvime Git <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="content-card-body p-2">
+                @if($bugunIsler->count() > 0)
+                    <div class="bugun-isler-list">
+                        @foreach($bugunIsler as $is)
+                            <div class="is-item" data-is-id="{{ $is->id }}">
+                                <div class="is-checkbox">
+                                    <input type="checkbox" 
+                                           class="form-check-input is-toggle" 
+                                           {{ $is->durum === 'tamamlandi' ? 'checked' : '' }}
+                                           data-id="{{ $is->id }}">
+                                </div>
+                                <div class="is-content {{ $is->durum === 'tamamlandi' ? 'is-completed' : '' }}">
+                                    <div class="is-baslik">{{ $is->baslik }}</div>
+                                    <div class="is-detay">
+                                        <span class="badge badge-sm {{ $is->renk_kategori === 'gece' ? 'bg-primary' : 'bg-secondary' }}">
+                                            {{ $is->renk_kategori === 'gece' ? 'Gece' : 'Normal' }}
+                                        </span>
+                                        <span class="text-muted">→</span>
+                                        <span>
+                                            @if($is->atananKullanicilar && $is->atananKullanicilar->count() > 0)
+                                                {{ $is->atananKullanicilar->pluck('ad')->join(', ') }}
+                                            @elseif($is->atananKullanici)
+                                                {{ $is->atananKullanici->ad }}
+                                            @else
+                                                -
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="is-durum-badge">
+                                    @if($is->durum === 'tamamlandi')
+                                        <span class="badge bg-success">✓</span>
+                                    @elseif($is->durum === 'gecikti')
+                                        <span class="badge bg-danger">!</span>
+                                    @else
+                                        <span class="badge bg-warning">○</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-muted text-center py-3 small">
+                        <i class="bi bi-calendar-x"></i>
+                        <div>Bugün için planlanmış iş yok</div>
+                    </div>
+                @endif
+            </div>
+        </div>
     </div>
 
     <!-- Sağ Kolon: Notlar -->
@@ -285,8 +435,8 @@
     </div>
 </div>
 
-<!-- Gün Detayları Modal -->
-<div class="modal fade" id="dayDetailsModal" tabindex="-1">
+<!-- Modal for calendar events -->
+<div class="modal fade" id="calendarEventModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -548,6 +698,77 @@
     padding: 3px 8px;
 }
 
+/* Bugünkü İşler Widget */
+.bugun-isler-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.is-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+}
+
+.is-item:hover {
+    background: #e9ecef;
+}
+
+.is-checkbox {
+    padding-top: 2px;
+}
+
+.is-checkbox .form-check-input {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.is-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.is-baslik {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.is-detay {
+    font-size: 0.75rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.is-content.is-completed .is-baslik {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.is-durum-badge {
+    padding-top: 2px;
+}
+
+.is-durum-badge .badge {
+    font-size: 0.75rem;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
 /* Fotoğraf Galerisi */
 .foto-gallery-grid {
     display: grid;
@@ -642,7 +863,7 @@
 
 <script>
 function showDayDetails(date) {
-    const modal = new bootstrap.Modal(document.getElementById('dayDetailsModal'));
+    const modal = new bootstrap.Modal(document.getElementById('calendarEventModal'));
     const modalBody = document.getElementById('modalBody');
     const modalDate = document.getElementById('modalDate');
     
@@ -746,6 +967,60 @@ function showDayDetails(date) {
             `;
         });
 }
+
+// Bugünkü işler checkbox toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.is-toggle');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const isId = this.dataset.id;
+            const isItem = this.closest('.is-item');
+            const isContent = isItem.querySelector('.is-content');
+            
+            // UI güncelle
+            if (this.checked) {
+                isContent.classList.add('is-completed');
+            } else {
+                isContent.classList.remove('is-completed');
+            }
+            
+            // Server'a gönder
+            fetch(`/admin/is-takvimi/${isId}/toggle-durum`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Durum badge'ini güncelle
+                    const badge = isItem.querySelector('.is-durum-badge .badge');
+                    if (data.durum === 'tamamlandi') {
+                        badge.className = 'badge bg-success';
+                        badge.textContent = '✓';
+                    } else {
+                        badge.className = 'badge bg-warning';
+                        badge.textContent = '○';
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                // Hata durumunda eski haline döndür
+                this.checked = !this.checked;
+                if (this.checked) {
+                    isContent.classList.add('is-completed');
+                } else {
+                    isContent.classList.remove('is-completed');
+                }
+            });
+        });
+    });
+});
 </script>
 
 @endsection

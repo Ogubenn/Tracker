@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\BinaController;
 use App\Http\Controllers\Admin\KontrolMaddesiController;
 use App\Http\Controllers\Admin\KontrolKaydiController;
+use App\Http\Controllers\Admin\GecmisTarihKontrolController;
 use App\Http\Controllers\Admin\MailAyarlariController;
 use App\Http\Controllers\Admin\MailTestController;
 use App\Http\Controllers\Admin\RaporController;
@@ -12,6 +13,10 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\IstatistiklerController;
 use App\Http\Controllers\Admin\SystemTestController;
+use App\Http\Controllers\Admin\IsTakvimiController;
+use App\Http\Controllers\Admin\ArsivlenmisIsController;
+use App\Http\Controllers\Admin\PersonelDevamController;
+use App\Http\Controllers\Admin\LaboratuvarController;
 use App\Http\Controllers\PublicKontrolController;
 use App\Http\Controllers\Personel\DashboardController as PersonelDashboard;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +27,110 @@ use Illuminate\Support\Facades\Artisan;
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+// Migration Trigger Route (Geliştirme için)
+// Kullanım: http://localhost/run-migration?key=atiksu2026
+Route::get('/run-migration', function () {
+    $secretKey = 'atiksu2026';
+    
+    if (request('key') !== $secretKey) {
+        abort(403, 'Yetkisiz erişim');
+    }
+    
+    try {
+        Artisan::call('migrate', [
+            '--force' => true
+        ]);
+        $output = Artisan::output();
+        
+        return response("<html>
+            <head>
+                <title>Migration Sonucu</title>
+                <style>
+                    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+                    .success { background: #d4edda; border: 1px solid #c3e6cb; padding: 20px; border-radius: 8px; color: #155724; }
+                    .output { background: #fff; padding: 15px; border-radius: 5px; margin-top: 20px; white-space: pre-wrap; font-family: monospace; }
+                    h2 { margin: 0 0 10px 0; }
+                </style>
+            </head>
+            <body>
+                <div class='success'>
+                    <h2>✅ Migration Başarıyla Çalıştırıldı</h2>
+                    <p>Tarih: " . now()->format('d.m.Y H:i:s') . "</p>
+                </div>
+                <div class='output'>" . htmlspecialchars($output) . "</div>
+                <p>
+                    <a href='/admin/mail-ayarlari'>Mail Ayarları Sayfasına Git →</a><br>
+                    <a href='/admin/arsivlenmis-isler'>Arşivlenmiş İşler Sayfasına Git →</a>
+                </p>
+            </body>
+        </html>");
+    } catch (\Exception $e) {
+        return response("<html>
+            <head>
+                <title>Migration Hatası</title>
+                <style>
+                    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+                    .error { background: #f8d7da; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px; color: #721c24; }
+                    h2 { margin: 0 0 10px 0; }
+                </style>
+            </head>
+            <body>
+                <div class='error'>
+                    <h2>❌ Migration Hatası</h2>
+                    <p>" . htmlspecialchars($e->getMessage()) . "</p>
+                </div>
+            </body>
+        </html>", 500);
+    }
+});
+
+// Bina ID nullable fix (TEK SEFERLIK)
+Route::get('/fix-bina-nullable', function () {
+    if (request('key') !== 'atiksu2026') {
+        abort(403, 'Yetkisiz erişim');
+    }
+    
+    try {
+        DB::statement('ALTER TABLE `arsivlenmis_isler` MODIFY COLUMN `bina_id` bigint(20) UNSIGNED NULL');
+        
+        // Foreign key constraint'i yeniden oluştur
+        try {
+            DB::statement('ALTER TABLE `arsivlenmis_isler` DROP FOREIGN KEY `arsivlenmis_isler_bina_id_foreign`');
+        } catch (\Exception $e) {
+            // Foreign key yoksa devam et
+        }
+        
+        DB::statement('ALTER TABLE `arsivlenmis_isler` ADD CONSTRAINT `arsivlenmis_isler_bina_id_foreign` FOREIGN KEY (`bina_id`) REFERENCES `binalar` (`id`) ON DELETE SET NULL');
+        
+        return response("<html>
+            <head><title>Başarılı</title>
+            <style>body{font-family:Arial;padding:20px;background:#f5f5f5;}
+            .success{background:#d4edda;border:1px solid #c3e6cb;padding:20px;border-radius:8px;color:#155724;}</style>
+            </head>
+            <body>
+                <div class='success'>
+                    <h2>✅ Bina ID Nullable Yapıldı</h2>
+                    <p>Artık bina olmadan iş ekleyebilirsiniz!</p>
+                    <p><a href='/admin/arsivlenmis-isler'>Arşivlenmiş İşler Sayfasına Git →</a></p>
+                </div>
+            </body>
+        </html>");
+    } catch (\Exception $e) {
+        return response("<html>
+            <head><title>Hata</title>
+            <style>body{font-family:Arial;padding:20px;background:#f5f5f5;}
+            .error{background:#f8d7da;border:1px solid #f5c6cb;padding:20px;border-radius:8px;color:#721c24;}</style>
+            </head>
+            <body>
+                <div class='error'>
+                    <h2>❌ Hata</h2>
+                    <p>" . htmlspecialchars($e->getMessage()) . "</p>
+                </div>
+            </body>
+        </html>", 500);
+    }
+});
 
 // Cron Trigger Route (External Cron Services için)
 // Kullanım: https://siteniz.com/cron-trigger?key=GIZLI_ANAHTAR
@@ -302,10 +411,8 @@ Route::get('/storage/{path}', function ($path) {
 
 Route::get('/', function () {
     if (auth()->check()) {
-        if (auth()->user()->isAdmin()) {
-            return redirect()->route('admin.dashboard');
-        }
-        return redirect()->route('personel.dashboard');
+        // Tüm kullanıcılar (admin ve personel) admin paneline erişebilir
+        return redirect()->route('admin.dashboard');
     }
     return redirect()->route('login');
 });
@@ -313,19 +420,29 @@ Route::get('/', function () {
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    // Rate limiting: 5 login denemesi/dakika
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     
     Route::get('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'showForgotForm'])->name('password.request');
-    Route::post('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'sendResetLink'])->name('password.email');
+    // Rate limiting: 3 şifre sıfırlama talebi/dakika
+    Route::post('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'sendResetLink'])
+        ->name('password.email')
+        ->middleware('throttle:3,1');
     Route::get('/reset-password/{token}', [App\Http\Controllers\PasswordResetController::class, 'showResetForm'])->name('password.reset');
-    Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::class, 'resetPassword'])->name('password.update');
+    // Rate limiting: 5 şifre sıfırlama girişimi/dakika
+    Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::class, 'resetPassword'])
+        ->name('password.update')
+        ->middleware('throttle:5,1');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Public QR Kod Kontrol Sistemi (Login gerektirmez)
-Route::get('/kontrol/bina/{uuid}', [PublicKontrolController::class, 'index'])->name('public.kontrol.index');
-Route::post('/kontrol/bina/{uuid}', [PublicKontrolController::class, 'store'])->name('public.kontrol.store');
+// Rate limiting: 20 istek/dakika
+Route::middleware('throttle:20,1')->group(function () {
+    Route::get('/kontrol/bina/{uuid}', [PublicKontrolController::class, 'index'])->name('public.kontrol.index');
+    Route::post('/kontrol/bina/{uuid}', [PublicKontrolController::class, 'store'])->name('public.kontrol.store');
+});
 
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -363,6 +480,29 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/kontrol-kayitlari/toplu-onayla', [KontrolKaydiController::class, 'topluOnayla'])->name('kontrol-kayitlari.toplu-onayla');
     Route::delete('/kontrol-kayitlari/{id}/fotograf', [KontrolKaydiController::class, 'deleteFotograf'])->name('kontrol-kayitlari.delete-fotograf');
     
+    // Geçmiş Tarihli Kontrol Girişi
+    Route::get('/kontroller/gecmis-tarih', [GecmisTarihKontrolController::class, 'index'])->name('kontroller.gecmis-tarih');
+    Route::post('/kontroller/gecmis-tarih', [GecmisTarihKontrolController::class, 'store'])->name('kontroller.gecmis-tarih.store');
+    
+    // Personel Devam Takibi
+    Route::get('/personel-devam', [PersonelDevamController::class, 'index'])->name('personel-devam.index');
+    Route::post('/personel-devam', [PersonelDevamController::class, 'store'])->name('personel-devam.store');
+    Route::get('/personel-devam/aylik', [PersonelDevamController::class, 'aylikGoruntule'])->name('personel-devam.aylik');
+    Route::get('/personel-devam/pdf', [PersonelDevamController::class, 'pdfIndir'])->name('personel-devam.pdf');
+    
+    // Laboratuvar Analiz Raporları
+    Route::get('/laboratuvar', [LaboratuvarController::class, 'index'])->name('laboratuvar.index');
+    Route::get('/laboratuvar/create', [LaboratuvarController::class, 'create'])->name('laboratuvar.create');
+    Route::post('/laboratuvar', [LaboratuvarController::class, 'store'])->name('laboratuvar.store');
+    Route::get('/laboratuvar/{id}', [LaboratuvarController::class, 'show'])->name('laboratuvar.show');
+    Route::get('/laboratuvar/{id}/edit', [LaboratuvarController::class, 'edit'])->name('laboratuvar.edit');
+    Route::put('/laboratuvar/{id}', [LaboratuvarController::class, 'update'])->name('laboratuvar.update');
+    Route::delete('/laboratuvar/{id}', [LaboratuvarController::class, 'destroy'])->name('laboratuvar.destroy');
+    Route::get('/laboratuvar-excel-import', [LaboratuvarController::class, 'excelImport'])->name('laboratuvar.excel-import');
+    Route::post('/laboratuvar-excel-import', [LaboratuvarController::class, 'excelImportStore'])->name('laboratuvar.excel-import-store');
+    Route::get('/laboratuvar-excel-template', [LaboratuvarController::class, 'excelTemplate'])->name('laboratuvar.excel-template');
+    Route::get('/laboratuvar-grafikler', [LaboratuvarController::class, 'grafikler'])->name('laboratuvar.grafikler');
+    
     // Kontrol Maddeleri - Bulk delete ÖNCELİKLE tanımlanmalı
     Route::delete('/kontrol-maddeleri/bulk-delete', [KontrolMaddesiController::class, 'bulkDestroy'])->name('kontrol-maddeleri.bulk-delete');
     Route::resource('kontrol-maddeleri', KontrolMaddesiController::class)->parameters(['kontrol-maddeleri' => 'kontrol_maddesi']);
@@ -370,9 +510,24 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Sayısal Veri Analizi
     Route::get('/sayisal-analiz', [IstatistiklerController::class, 'sayisalAnaliz'])->name('sayisal-analiz');
     
+    // İş Takvimi
+    Route::get('/is-takvimi', [IsTakvimiController::class, 'index'])->name('is-takvimi.index');
+    Route::get('/is-takvimi/events', [IsTakvimiController::class, 'getEvents'])->name('is-takvimi.events');
+    Route::get('/is-takvimi/basliklar', [IsTakvimiController::class, 'getBasliklar'])->name('is-takvimi.basliklar');
+    Route::post('/is-takvimi', [IsTakvimiController::class, 'store'])->name('is-takvimi.store');
+    Route::put('/is-takvimi/{id}', [IsTakvimiController::class, 'update'])->name('is-takvimi.update');
+    Route::delete('/is-takvimi/{id}', [IsTakvimiController::class, 'destroy'])->name('is-takvimi.destroy');
+    Route::post('/is-takvimi/{id}/toggle-durum', [IsTakvimiController::class, 'toggleDurum'])->name('is-takvimi.toggle-durum');
+    Route::patch('/is-takvimi/{id}/tarih', [IsTakvimiController::class, 'updateTarih'])->name('is-takvimi.update-tarih');
+    Route::post('/is-takvimi/copy-tekrarli', [IsTakvimiController::class, 'copyTekrarliIsler'])->name('is-takvimi.copy-tekrarli');
+    
     // Raporlar
     Route::get('/raporlar', [RaporController::class, 'index'])->name('raporlar.index');
     Route::get('/raporlar/pdf', [RaporController::class, 'exportPdf'])->name('raporlar.pdf');
+    
+    // Arşivlenmiş İşler
+    Route::resource('arsivlenmis-isler', ArsivlenmisIsController::class)->parameters(['arsivlenmis-isler' => 'arsivlenmis_is']);
+    Route::post('/arsivlenmis-isler/{arsivlenmis_is}/delete-fotograf', [ArsivlenmisIsController::class, 'deleteFotograf'])->name('arsivlenmis-isler.delete-fotograf');
     
     // Aktivite Logları
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
@@ -385,8 +540,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/system-test/clear-cache', [SystemTestController::class, 'clearCache'])->name('system-test.clear-cache');
 });
 
-// Personel Routes
-Route::middleware(['auth', 'personel'])->prefix('personel')->name('personel.')->group(function () {
-    Route::get('/dashboard', [PersonelDashboard::class, 'index'])->name('dashboard');
+// Personel Routes - Artık admin paneline yönlendiriliyor
+Route::middleware(['auth'])->prefix('personel')->name('personel.')->group(function () {
+    // Eski personel dashboard URL'i admin dashboard'a yönlendirilir
+    Route::get('/dashboard', function () {
+        return redirect()->route('admin.dashboard');
+    })->name('dashboard');
+    
+    // Kontrol kaydetme işlemi admin controller'a yönlendirilir
     Route::post('/kontrol-kaydet', [PersonelDashboard::class, 'store'])->name('kontrol.store');
 });

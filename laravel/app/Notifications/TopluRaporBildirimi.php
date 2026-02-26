@@ -15,12 +15,18 @@ class TopluRaporBildirimi extends Notification implements ShouldQueue
     private Collection $tamamlananKontroller;
     private Collection $eksikKontroller;
     private string $tarih;
+    private array $isTakvimi;
 
-    public function __construct(Collection $tamamlananKontroller, Collection $eksikKontroller, string $tarih)
-    {
+    public function __construct(
+        Collection $tamamlananKontroller, 
+        Collection $eksikKontroller, 
+        string $tarih,
+        array $isTakvimi = []
+    ) {
         $this->tamamlananKontroller = $tamamlananKontroller;
         $this->eksikKontroller = $eksikKontroller;
         $this->tarih = $tarih;
+        $this->isTakvimi = $isTakvimi;
     }
 
     public function via(object $notifiable): array
@@ -69,6 +75,35 @@ class TopluRaporBildirimi extends Notification implements ShouldQueue
 
             if ($this->eksikKontroller->count() > 5) {
                 $mail->line('... ve ' . ($this->eksikKontroller->count() - 5) . ' kontrol daha');
+            }
+        }
+
+        // İş Takvimi Raporu Ekle
+        if (!empty($this->isTakvimi) && $this->isTakvimi['toplam'] > 0) {
+            $mail->line('---')
+                 ->line('📅 **İş Takvimi Durumu:**')
+                 ->line('Toplam: ' . $this->isTakvimi['toplam'] . ' iş');
+
+            if (!empty($this->isTakvimi['tamamlanan'])) {
+                $mail->line('')->line('✅ **Tamamlanan İşler:**');
+                foreach (array_slice($this->isTakvimi['tamamlanan'], 0, 5) as $is) {
+                    $tekrar = $is['tekrarli_mi'] ? ' 🔄' : '';
+                    $mail->line('• ' . $is['baslik'] . ' (' . $is['renk_kategori'] . ')' . $tekrar);
+                }
+                if (count($this->isTakvimi['tamamlanan']) > 5) {
+                    $mail->line('... ve ' . (count($this->isTakvimi['tamamlanan']) - 5) . ' iş daha');
+                }
+            }
+
+            if (!empty($this->isTakvimi['tamamlanmamis'])) {
+                $mail->line('')->line('⚠️ **Tamamlanmayan İşler:**');
+                foreach (array_slice($this->isTakvimi['tamamlanmamis'], 0, 5) as $is) {
+                    $tekrar = $is['tekrarli_mi'] ? ' 🔄' : '';
+                    $mail->line('• ' . $is['baslik'] . ' - ' . $is['atananlar'] . $tekrar);
+                }
+                if (count($this->isTakvimi['tamamlanmamis']) > 5) {
+                    $mail->line('... ve ' . (count($this->isTakvimi['tamamlanmamis']) - 5) . ' iş daha');
+                }
             }
         }
 

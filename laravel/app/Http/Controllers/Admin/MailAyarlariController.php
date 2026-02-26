@@ -21,6 +21,8 @@ class MailAyarlariController extends Controller
             'eksik_kontrol_aksam_saat' => SiteAyarlari::get('eksik_kontrol_aksam_saat', '19:00'),
             'toplu_rapor_mail_aktif' => SiteAyarlari::getBool('toplu_rapor_mail_aktif'),
             'toplu_rapor_saat' => SiteAyarlari::get('toplu_rapor_saat', '19:00'),
+            'is_takvimi_hatirlatma_aktif' => SiteAyarlari::getBool('is_takvimi_hatirlatma_aktif'),
+            'is_takvimi_hatirlatma_saat' => SiteAyarlari::get('is_takvimi_hatirlatma_saat', '08:00'),
         ];
 
         // SMTP ayarlarını .env'den oku
@@ -46,6 +48,8 @@ class MailAyarlariController extends Controller
         SiteAyarlari::set('eksik_kontrol_aksam_saat', $validated['eksik_kontrol_aksam_saat']);
         SiteAyarlari::set('toplu_rapor_mail_aktif', $validated['toplu_rapor_mail_aktif'] ?? '0');
         SiteAyarlari::set('toplu_rapor_saat', $validated['toplu_rapor_saat']);
+        SiteAyarlari::set('is_takvimi_hatirlatma_aktif', $validated['is_takvimi_hatirlatma_aktif'] ?? '0');
+        SiteAyarlari::set('is_takvimi_hatirlatma_saat', $validated['is_takvimi_hatirlatma_saat']);
 
         return redirect()->route('admin.mail-ayarlari.index')
             ->with('success', 'Mail ayarları başarıyla güncellendi.');
@@ -59,6 +63,8 @@ class MailAyarlariController extends Controller
             'eksik_kontrol_aksam_saat' => 'required|date_format:H:i',
             'toplu_rapor_mail_aktif' => 'nullable|in:1',
             'toplu_rapor_saat' => 'required|date_format:H:i',
+            'is_takvimi_hatirlatma_aktif' => 'nullable|in:1',
+            'is_takvimi_hatirlatma_saat' => 'required|date_format:H:i',
         ]);
     }
 }

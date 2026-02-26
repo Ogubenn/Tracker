@@ -31,7 +31,7 @@ return [
     |
     */
 
-    'lifetime' => env('SESSION_LIFETIME', 120),
+    'lifetime' => env('SESSION_LIFETIME', 1440), // 24 saat (production için)
 
     'expire_on_close' => false,
 
@@ -196,7 +196,7 @@ return [
     |
     */
 
-    'same_site' => 'lax',
+    'same_site' => env('SESSION_SAME_SITE', 'lax'), // production'da strict olabilir
 
     /*
     |--------------------------------------------------------------------------

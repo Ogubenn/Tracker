@@ -8,6 +8,8 @@ use App\Models\KontrolMaddesi;
 use App\Models\KontrolKaydi;
 use App\Models\User;
 use App\Models\DashboardNote;
+use App\Models\IsTakvimi;
+use App\Models\LaboratuvarRapor;
 use App\Notifications\DashboardNoteNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -33,6 +35,8 @@ class DashboardController extends Controller
             'currentYear' => $currentYear,
             'today' => $today->day,
             'bugunFotograflar' => $this->getBugunFotograflar(),
+            'bugunIsler' => $this->getBugunIsler(),
+            'laboratuvarStats' => $this->getLaboratuvarStats(),
         ]);
     }
 
@@ -318,5 +322,75 @@ class DashboardController extends Controller
             'eksik_kontroller' => array_values($eksikler),
             'uygunsuz_kontroller' => $uygunsuzlar,
         ]);
+    }
+    
+    /**
+     * Bugünkü işleri getir (İş Takvimi)
+     */
+    private function getBugunIsler()
+    {
+        // Gecikenleri güncelle
+        IsTakvimi::gecikenleriGuncelle();
+        
+        try {
+            return IsTakvimi::with(['atananKullanici', 'atananKullanicilar'])
+                ->bugun()
+                ->orderBy('durum', 'asc')
+                ->get();
+        } catch (\Exception $e) {
+            // Pivot tablo henüz yoksa sadece tek kullanıcı ile çalış
+            return IsTakvimi::with('atananKullanici')
+                ->bugun()
+                ->orderBy('durum', 'asc')
+                ->get();
+        }
+    }
+
+    /**
+     * Laboratuvar istatistiklerini getir
+     */
+    private function getLaboratuvarStats()
+    {
+        try {
+            $toplamRapor = LaboratuvarRapor::count();
+            $buAyRapor = LaboratuvarRapor::whereMonth('rapor_tarihi', Carbon::now()->month)
+                ->whereYear('rapor_tarihi', Carbon::now()->year)
+                ->count();
+            
+            $sonRaporlar = LaboratuvarRapor::with(['parametreler', 'olusturan'])
+                ->latest('rapor_tarihi')
+                ->take(5)
+                ->get();
+            
+            // Uygunluk durumları
+            $toplamParametre = \DB::table('laboratuvar_parametreler')->count();
+            $uygunParametre = \DB::table('laboratuvar_parametreler')
+                ->where('uygunluk', 'uygun')
+                ->count();
+            $uygunDegilParametre = \DB::table('laboratuvar_parametreler')
+                ->where('uygunluk', 'uygun_degil')
+                ->count();
+            
+            return [
+                'toplam_rapor' => $toplamRapor,
+                'bu_ay_rapor' => $buAyRapor,
+                'son_raporlar' => $sonRaporlar,
+                'toplam_parametre' => $toplamParametre,
+                'uygun_parametre' => $uygunParametre,
+                'uygun_degil_parametre' => $uygunDegilParametre,
+                'uygunluk_yuzdesi' => $toplamParametre > 0 ? round(($uygunParametre / $toplamParametre) * 100, 1) : 0,
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Laboratuvar stats hatası: ' . $e->getMessage());
+            return [
+                'toplam_rapor' => 0,
+                'bu_ay_rapor' => 0,
+                'son_raporlar' => collect(),
+                'toplam_parametre' => 0,
+                'uygun_parametre' => 0,
+                'uygun_degil_parametre' => 0,
+                'uygunluk_yuzdesi' => 0,
+            ];
+        }
     }
 }

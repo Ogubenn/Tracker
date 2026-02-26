@@ -1,0 +1,217 @@
+@extends('layouts.app')
+
+@section('title', 'Yeni Laboratuvar Raporu')
+
+@section('content')
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-plus-circle"></i> Yeni Laboratuvar Raporu
+        </h1>
+        <a href="{{ route('admin.laboratuvar.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Geri
+        </a>
+    </div>
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show">
+            <strong>Hata!</strong>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('admin.laboratuvar.store') }}" enctype="multipart/form-data" id="raporForm">
+        @csrf
+
+        <!-- Rapor Bilgileri -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-file-text"></i> Rapor Bilgileri</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Rapor No <span class="text-danger">*</span></label>
+                        <input type="text" name="rapor_no" class="form-control" placeholder="T-79051-2025-03" value="{{ old('rapor_no') }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Rapor Tarihi <span class="text-danger">*</span></label>
+                        <input type="date" name="rapor_tarihi" class="form-control" value="{{ old('rapor_tarihi', date('Y-m-d')) }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tesis Adı <span class="text-danger">*</span></label>
+                        <input type="text" name="tesis_adi" class="form-control" placeholder="Bulancak Belediyesi..." value="{{ old('tesis_adi') }}" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Numune Alma Noktası</label>
+                        <input type="text" name="numune_alma_noktasi" class="form-control" placeholder="Atıksu Arıtma Tesis Çıkış" value="{{ old('numune_alma_noktasi') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Numune Alma Tarihi</label>
+                        <input type="datetime-local" name="numune_alma_tarihi" class="form-control" value="{{ old('numune_alma_tarihi') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Lab Geliş Tarihi</label>
+                        <input type="datetime-local" name="lab_gelis_tarihi" class="form-control" value="{{ old('lab_gelis_tarihi') }}">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label">Numune Alma Şekli</label>
+                        <input type="text" name="numune_alma_sekli" class="form-control" placeholder="24 Saatlik Kompozit" value="{{ old('numune_alma_sekli') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Numune Geliş Şekli</label>
+                        <input type="text" name="numune_gelis_sekli" class="form-control" placeholder="Yerinde Alma-Korumalı-Mühürlü" value="{{ old('numune_gelis_sekli') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Numune Ambalaj</label>
+                        <input type="text" name="numune_ambalaj" class="form-control" placeholder="2 Ad. 0,5 L Plastik" value="{{ old('numune_ambalaj') }}">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label">Numune Numarası</label>
+                        <input type="text" name="numune_numarasi" class="form-control" placeholder="AS-29012026-005" value="{{ old('numune_numarasi') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Şahit Numune</label>
+                        <input type="text" name="sahit_numune" class="form-control" placeholder="Yok" value="{{ old('sahit_numune') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Analiz Başlangıç</label>
+                        <input type="date" name="analiz_baslangic" class="form-control" value="{{ old('analiz_baslangic') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Analiz Bitiş</label>
+                        <input type="date" name="analiz_bitis" class="form-control" value="{{ old('analiz_bitis') }}">
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <label class="form-label">Notlar</label>
+                        <textarea name="notlar" class="form-control" rows="2" placeholder="Ek açıklamalar...">{{ old('notlar') }}</textarea>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <label class="form-label">PDF Rapor Dosyası</label>
+                        <input type="file" name="pdf_dosya" class="form-control" accept=".pdf">
+                        <small class="text-muted">Maksimum 10 MB</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parametreler -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-list-check"></i> Analiz Parametreleri</h5>
+                <button type="button" class="btn btn-light btn-sm" onclick="parametreEkle()">
+                    <i class="bi bi-plus-circle"></i> Parametre Ekle
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="parametrelerContainer">
+                    <!-- İlk parametre satırı -->
+                    <div class="parametre-satir border-bottom pb-3 mb-3">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Parametre Adı <span class="text-danger">*</span></label>
+                                <input type="text" name="parametreler[0][parametre_adi]" class="form-control form-control-sm" placeholder="pH, BOİ5, KOİ..." required>
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label small">Birim</label>
+                                <input type="text" name="parametreler[0][birim]" class="form-control form-control-sm" placeholder="mg/L">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Analiz Sonucu</label>
+                                <input type="number" step="0.0001" name="parametreler[0][analiz_sonucu]" class="form-control form-control-sm" placeholder="4.05">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Limit Değeri</label>
+                                <input type="text" name="parametreler[0][limit_degeri]" class="form-control form-control-sm" placeholder="25">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Analiz Metodu</label>
+                                <input type="text" name="parametreler[0][analiz_metodu]" class="form-control form-control-sm" placeholder="SM 5210 B">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label small">Tablo No</label>
+                                <input type="number" name="parametreler[0][tablo_no]" class="form-control form-control-sm" placeholder="1">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label small">&nbsp;</label>
+                                <button type="button" class="btn btn-danger btn-sm w-100" onclick="parametreSil(this)" disabled>
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-end">
+            <a href="{{ route('admin.laboratuvar.index') }}" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> İptal
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-save"></i> Kaydet
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+let parametreIndex = 1;
+
+function parametreEkle() {
+    const container = document.getElementById('parametrelerContainer');
+    const yeniSatir = `
+        <div class="parametre-satir border-bottom pb-3 mb-3">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="form-label small">Parametre Adı <span class="text-danger">*</span></label>
+                    <input type="text" name="parametreler[${parametreIndex}][parametre_adi]" class="form-control form-control-sm" placeholder="pH, BOİ5, KOİ..." required>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">Birim</label>
+                    <input type="text" name="parametreler[${parametreIndex}][birim]" class="form-control form-control-sm" placeholder="mg/L">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Analiz Sonucu</label>
+                    <input type="number" step="0.0001" name="parametreler[${parametreIndex}][analiz_sonucu]" class="form-control form-control-sm" placeholder="4.05">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Limit Değeri</label>
+                    <input type="text" name="parametreler[${parametreIndex}][limit_degeri]" class="form-control form-control-sm" placeholder="25">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Analiz Metodu</label>
+                    <input type="text" name="parametreler[${parametreIndex}][analiz_metodu]" class="form-control form-control-sm" placeholder="SM 5210 B">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">Tablo No</label>
+                    <input type="number" name="parametreler[${parametreIndex}][tablo_no]" class="form-control form-control-sm" placeholder="1">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">&nbsp;</label>
+                    <button type="button" class="btn btn-danger btn-sm w-100" onclick="parametreSil(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', yeniSatir);
+    parametreIndex++;
+}
+
+function parametreSil(btn) {
+    btn.closest('.parametre-satir').remove();
+}
+</script>
+@endsection

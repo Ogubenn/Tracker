@@ -77,6 +77,48 @@
                             </div>
                         </div>
 
+                        <!-- İş Takvimi Hatırlatma -->
+                        <div class="card border-warning shadow-sm mb-4">
+                            <div class="card-header bg-warning bg-opacity-10">
+                                <h6 class="mb-0"><i class="bi bi-calendar-check text-warning me-2"></i>İş Takvimi Hatırlatmaları</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check form-switch mb-4">
+                                    <input class="form-check-input" type="checkbox" name="is_takvimi_hatirlatma_aktif" 
+                                           id="is_takvimi_hatirlatma_aktif" value="1"
+                                           {{ $ayarlar['is_takvimi_hatirlatma_aktif'] ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_takvimi_hatirlatma_aktif">
+                                        <strong>Sabah Hatırlatma Maillerini Gönder</strong>
+                                        <p class="text-muted small mb-0">Aktif edildiğinde atanan kullanıcılara günlük iş hatırlatması gönderilir</p>
+                                    </label>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <label for="is_takvimi_hatirlatma_saat" class="form-label">
+                                            <i class="bi bi-sunrise me-1"></i>Hatırlatma Gönderim Saati
+                                        </label>
+                                        <input type="time" class="form-control form-control-lg" name="is_takvimi_hatirlatma_saat" 
+                                               id="is_takvimi_hatirlatma_saat" 
+                                               value="{{ $ayarlar['is_takvimi_hatirlatma_saat'] }}" required>
+                                        <small class="text-muted">Personele bugünkü işleri hatırlatma maili gönderilir</small>
+                                    </div>
+
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Mail İçeriği</label>
+                                        <div class="alert alert-warning mb-0">
+                                            <ul class="mb-0 small">
+                                                <li>Bugün tamamlanması gereken işler</li>
+                                                <li>İş başlığı ve renk kategorisi</li>
+                                                <li>Tekrarlanan işlerin gösterimi</li>
+                                                <li>Direkt takvime bağlantı</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Toplu Rapor Bildirimleri -->
                         <div class="card shadow-sm mb-4">
                             <div class="card-header bg-light">
@@ -112,6 +154,7 @@
                                                 <li>Eksik kalan kontroller</li>
                                                 <li>Tamamlanma yüzdesi</li>
                                                 <li>Personel performansı</li>
+                                                <li><strong class="text-warning">İş Takvimi Durumu</strong></li>
                                             </ul>
                                         </div>
                                     </div>

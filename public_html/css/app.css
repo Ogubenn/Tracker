@@ -39,26 +39,111 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .nav-link { color: var(--gray-700) !important; font-weight: 500; }
 .nav-link:hover { color: var(--primary) !important; }
 
-/* SIDEBAR */
-.sidebar { position: fixed; top: var(--topbar-height); bottom: 0; left: 0; width: var(--sidebar-width); background: var(--white); border-right: 1px solid var(--gray-200); padding: 1.5rem 0; overflow-y: auto; overflow-x: hidden; z-index: 1000; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.sidebar.collapsed { width: 70px; }
-.sidebar-overlay { position: fixed; top: var(--topbar-height); left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; pointer-events: none; }
-.sidebar-overlay.show { opacity: 1; visibility: visible; pointer-events: auto; }
-body.sidebar-open { overflow: hidden; }
-.sidebar .nav-link { padding: 0.75rem 1.5rem; color: var(--gray-700); font-weight: 500; font-size: 0.9375rem; display: flex; align-items: center; gap: 0.75rem; border-left: 3px solid transparent; transition: all 0.2s ease-in-out; position: relative; white-space: nowrap; }
-.sidebar .nav-link i { font-size: 1.25rem; width: 24px; flex-shrink: 0; transition: transform 0.2s ease-in-out; }
-.sidebar .nav-link .nav-text { transition: opacity 0.2s ease-in-out; }
-.sidebar.collapsed .nav-link { padding: 0.75rem 1.25rem; justify-content: center; }
-.sidebar.collapsed .nav-link .nav-text { opacity: 0; width: 0; overflow: hidden; }
-.sidebar .nav-link:hover { background-color: var(--gray-50); color: var(--primary); }
-.sidebar .nav-link:hover i { transform: scale(1.1); }
-.sidebar .nav-link.active { background-color: var(--primary); color: var(--white) !important; border-left-color: var(--primary-dark); }
-.sidebar .nav-link.active i { color: var(--white); }
+/* MODERN HAMBURGER MENU - TRENDYOL STYLE */
+.sidebar-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 2000; opacity: 0; visibility: hidden; transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(2px); }
+.sidebar-overlay.show { opacity: 1; visibility: visible; }
 
-/* SIDEBAR TOOLTIP */
-.sidebar-tooltip { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); background: var(--gray-900); color: var(--white); padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.875rem; white-space: nowrap; margin-left: 0.75rem; opacity: 0; visibility: hidden; transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out; pointer-events: none; z-index: 1100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-.sidebar-tooltip::before { content: ''; position: absolute; right: 100%; top: 50%; transform: translateY(-50%); border: 6px solid transparent; border-right-color: var(--gray-900); }
-.sidebar.collapsed .nav-link:hover .sidebar-tooltip { opacity: 1; visibility: visible; transition-delay: 0.3s; }
+.sidebar { position: fixed; top: 0; bottom: 0; left: 0; width: 320px; max-width: 85vw; background: var(--white); z-index: 2001; overflow: hidden; box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15); transform: translateX(-100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; }
+.sidebar.show { transform: translateX(0); }
+
+.sidebar-header { padding: 1.25rem 1.5rem; background: var(--primary); color: var(--white); display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.1); flex-shrink: 0; }
+.sidebar-header h5 { margin: 0; font-size: 1.125rem; font-weight: 600; display: flex; align-items: center; gap: 0.625rem; }
+.sidebar-header h5 i { font-size: 1.25rem; }
+.sidebar-close { background: transparent; border: none; color: var(--white); font-size: 1.5rem; padding: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: var(--transition); }
+.sidebar-close:hover { background: rgba(255, 255, 255, 0.15); }
+
+.sidebar-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0.5rem 0; }
+.sidebar-content::-webkit-scrollbar { width: 6px; }
+.sidebar-content::-webkit-scrollbar-track { background: var(--gray-100); }
+.sidebar-content::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+.sidebar-content::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+.sidebar .nav-link { padding: 1rem 1.5rem; color: var(--gray-800); font-weight: 500; font-size: 0.9375rem; display: flex; align-items: center; gap: 1rem; border: none; transition: all 0.2s ease-in-out; position: relative; text-decoration: none; background: transparent; width: 100%; cursor: pointer; }
+.sidebar .nav-link i.nav-icon { font-size: 1.375rem; width: 28px; color: var(--gray-600); flex-shrink: 0; transition: color 0.2s; }
+.sidebar .nav-link .nav-text { flex: 1; color: var(--gray-800); }
+.sidebar .nav-link:hover { background: var(--gray-50); }
+.sidebar .nav-link:hover .nav-icon { color: var(--primary); }
+.sidebar .nav-link:hover .nav-text { color: var(--primary); }
+.sidebar .nav-link.active { background: rgba(59, 130, 246, 0.08); }
+.sidebar .nav-link.active .nav-icon { color: var(--primary); }
+.sidebar .nav-link.active .nav-text { color: var(--primary); font-weight: 600; }
+
+/* NESTED MENU STYLES - MODERN & BELIRGIN */
+.nav-link.has-submenu { position: relative; }
+.nav-link.has-submenu::after { content: '\f282'; font-family: 'bootstrap-icons'; font-size: 1rem; position: absolute; right: 1.5rem; transition: transform 0.3s ease; color: var(--gray-500); }
+.nav-link.has-submenu.expanded { background: rgba(59, 130, 246, 0.05); }
+.nav-link.has-submenu.expanded::after { transform: rotate(180deg); color: var(--primary); }
+
+.submenu { 
+    max-height: 0; 
+    overflow: hidden; 
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
+    background: linear-gradient(to right, rgba(59, 130, 246, 0.03) 0%, transparent 100%);
+    border-left: 3px solid transparent;
+    margin-left: 1rem;
+}
+.submenu.expanded { 
+    max-height: 500px; 
+    border-left-color: var(--primary);
+}
+.submenu .nav-link { 
+    padding: 0.65rem 1.5rem 0.65rem 2.5rem; 
+    font-size: 0.875rem; 
+    position: relative;
+    border-left: 2px solid transparent;
+    margin-left: 1rem;
+}
+.submenu .nav-link::before {
+    content: '';
+    position: absolute;
+    left: -1rem;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    background: var(--gray-400);
+    border-radius: 50%;
+    transform: translateY(-50%);
+    transition: all 0.2s;
+}
+.submenu .nav-link:hover { 
+    background: rgba(59, 130, 246, 0.08);
+    border-left-color: var(--primary);
+}
+.submenu .nav-link:hover::before {
+    background: var(--primary);
+    width: 8px;
+    height: 8px;
+}
+.submenu .nav-link.active {
+    background: rgba(59, 130, 246, 0.12);
+    border-left-color: var(--primary);
+    font-weight: 600;
+}
+.submenu .nav-link.active::before {
+    background: var(--primary);
+    width: 8px;
+    height: 8px;
+}
+.submenu .nav-link .nav-icon { font-size: 1rem; width: 20px; color: var(--gray-500); }
+.submenu .nav-link:hover .nav-icon,
+.submenu .nav-link.active .nav-icon { color: var(--primary); }
+
+/* DESKTOP SIDEBAR (ESKI TASARIM - SADECE DESKTOP) */
+@media (min-width: 992px) {
+    .sidebar { position: fixed; top: var(--topbar-height); bottom: 0; left: 0; width: var(--sidebar-width); background: var(--white); border-right: 1px solid var(--gray-200); padding: 1.5rem 0; overflow-y: auto; overflow-x: hidden; z-index: 1000; transform: none; box-shadow: none; max-width: none; display: block; }
+    .sidebar.show { transform: none; }
+    .sidebar-header { display: none; }
+    .sidebar-content { padding: 0; }
+    .sidebar .nav-link { padding: 0.75rem 1.5rem; border-left: 3px solid transparent; }
+    .sidebar .nav-link i.nav-icon { font-size: 1.25rem; width: 24px; }
+    .sidebar .nav-link.active { border-left-color: var(--primary-dark); }
+    .sidebar-overlay { display: none; }
+    
+    /* Desktop submenu düzenlemeleri */
+    .submenu { margin-left: 0.5rem; }
+    .submenu .nav-link { padding: 0.6rem 1.5rem 0.6rem 2.5rem; border-left: 2px solid transparent; }
+    .submenu .nav-link::before { left: 0.75rem; }
+}
 
 /* MAIN */
 .main-content { margin-left: var(--sidebar-width); margin-top: var(--topbar-height); padding: 2rem; min-height: calc(100vh - var(--topbar-height)); width: calc(100% - var(--sidebar-width)); box-sizing: border-box; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -180,17 +265,10 @@ body.sidebar-open { overflow: hidden; }
 .text-success { color: var(--success) !important; }
 .text-muted { color: var(--gray-600) !important; }
 
-/* MOBILE */
+/* MOBILE & TABLET */
 @media (max-width: 991px) {
     .main-content { margin-left: 0; padding: 1rem; width: 100%; font-size: 15px; transition: none; }
-    .main-content.sidebar-collapsed { margin-left: 0; width: 100%; }
-    .sidebar { transform: translateX(-100%); box-shadow: var(--shadow-md); z-index: 1045; width: var(--sidebar-width) !important; }
-    .sidebar.collapsed { width: var(--sidebar-width) !important; }
-    .sidebar.collapsed .nav-link { padding: 0.75rem 1.5rem; justify-content: flex-start; }
-    .sidebar.collapsed .nav-link .nav-text { opacity: 1; width: auto; }
-    .sidebar.show { transform: translateX(0); box-shadow: 4px 0 12px rgba(0,0,0,0.15); }
-    .sidebar-overlay { z-index: 1044; }
-    .sidebar-tooltip { display: none !important; }
+    body.sidebar-open { overflow: hidden; }
     .stat-card-info .stat-number { font-size: 2rem; }
     .stat-card-icon { width: 56px; height: 56px; font-size: 1.75rem; }
     .page-header h1 { font-size: 1.75rem; }
@@ -214,6 +292,11 @@ body.sidebar-open { overflow: hidden; }
     
     /* Dropdown mobil positioning */
     .dropdown-menu { position: fixed !important; top: 56px !important; right: 0.75rem !important; left: auto !important; min-width: 220px; max-width: calc(100vw - 1.5rem); }
+    
+    /* Mobil submenu düzenlemeleri */
+    .submenu { margin-left: 0; border-left: none; background: var(--gray-50); }
+    .submenu .nav-link { padding: 0.65rem 1rem 0.65rem 3rem; margin-left: 0; }
+    .submenu .nav-link::before { left: 1.5rem; }
     
     /* Tablo düzenlemeleri */
     .table-wrapper { margin: -1.5rem; padding: 1.5rem; }

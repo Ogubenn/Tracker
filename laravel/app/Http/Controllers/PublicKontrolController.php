@@ -33,7 +33,13 @@ class PublicKontrolController extends Controller
         $bugun = Carbon::today();
         $kontrolMaddeleri = $this->getRequiredKontrollerForToday($bina, $bugun);
         
-        return view('public.kontrol', compact('bina', 'kontrolMaddeleri', 'personeller', 'bugun'));
+        // En son kontrol bilgisini al
+        $sonKontrol = KontrolKaydi::where('bina_id', $bina->id)
+            ->with('yapanKullanici')
+            ->orderBy('created_at', 'desc')
+            ->first();
+        
+        return view('public.kontrol', compact('bina', 'kontrolMaddeleri', 'personeller', 'bugun', 'sonKontrol'));
     }
     
     public function store(Request $request, string $uuid)
@@ -53,7 +59,12 @@ class PublicKontrolController extends Controller
             
             $this->saveKontrolKayitlari($validated, $bina, $genelDosyalar, $request->ip(), $request);
             
-            return redirect()->back()->with('success', 'Kontrol kayıtları başarıyla oluşturuldu. Admin onayı bekleniyor.');
+            $kaydedilenSayisi = count(array_filter($validated['kayitlar'] ?? [], fn($k) => !empty($k['durum'])));
+            $mesaj = $kaydedilenSayisi > 0 
+                ? "✅ {$kaydedilenSayisi} kontrol kaydedildi. Kalan kontroller için tekrar QR okutabilirsiniz." 
+                : 'Hiçbir kontrol kaydedilmedi. Lütfen en az bir durum seçin.';
+            
+            return redirect()->back()->with('success', $mesaj);
             
         } catch (\Exception $e) {
             \Log::error('Kontrol kaydetme hatası: ' . $e->getMessage());
@@ -91,12 +102,12 @@ class PublicKontrolController extends Controller
     {
         return $request->validate([
             'personel_id' => 'required|exists:users,id',
-            'kayitlar' => 'required|array',
+            'kayitlar' => 'nullable|array',
             'kayitlar.*.kontrol_maddesi_id' => 'required|exists:kontrol_maddeleri,id',
             'kayitlar.*.girilen_deger' => 'nullable|string',
             'kayitlar.*.baslangic_saati' => 'nullable|date_format:H:i',
             'kayitlar.*.bitis_saati' => 'nullable|date_format:H:i',
-            'kayitlar.*.durum' => 'required|in:uygun,uygun_degil,duzeltme_gerekli',
+            'kayitlar.*.durum' => 'nullable|in:uygun,uygun_degil,duzeltme_gerekli',
             'kayitlar.*.fotograflar.*' => 'nullable|file|image|mimes:jpeg,jpg,png,gif,webp|max:' . self::MAX_FILE_SIZE,
             'genel_aciklama' => 'nullable|string',
             'genel_dosyalar.*' => 'nullable|file|image|mimes:jpeg,jpg,png,gif,webp|max:' . self::MAX_FILE_SIZE,
@@ -116,7 +127,17 @@ class PublicKontrolController extends Controller
     {
         $tarih = Carbon::today();
 
+        // Sadece durum seçilmiş kontrolleri kaydet
+        if (!isset($validated['kayitlar']) || empty($validated['kayitlar'])) {
+            return;
+        }
+
         foreach ($validated['kayitlar'] as $index => $kayit) {
+            // Durum seçilmemişse bu kaydı atla
+            if (empty($kayit['durum'])) {
+                continue;
+            }
+
             // Her kontrol için kendi fotoğraflarını yükle
             $kontrolFotograflar = [];
             if ($request->hasFile("kayitlar.{$index}.fotograflar")) {

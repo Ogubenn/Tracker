@@ -88,11 +88,8 @@ class AuthController extends Controller
 
     private function redirectUserBasedOnRole($user)
     {
-        if ($user->isAdmin()) {
-            return redirect()->intended(route('admin.dashboard'));
-        }
-        
-        return redirect()->intended(route('personel.dashboard'));
+        // Tüm kullanıcılar (admin ve personel) admin paneline erişebilir
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     private function handleFailedLogin(string $rateLimiterKey)
