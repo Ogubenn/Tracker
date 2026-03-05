@@ -22,8 +22,8 @@
 @endif
 
 <!-- İstatistik Kartları -->
-<div class="row g-2 g-md-3 mb-3">
-    <div class="col-6 col-md-2">
+<div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6 g-2 g-md-3 mb-3">
+    <div class="col">
         <div class="stat-card-mini">
             <div class="stat-icon blue">
                 <i class="bi bi-building"></i>
@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <div class="col-6 col-md-2">
+    <div class="col">
         <div class="stat-card-mini">
             <div class="stat-icon purple">
                 <i class="bi bi-check2-square"></i>
@@ -47,7 +47,7 @@
         </div>
     </div>
 
-    <div class="col-6 col-md-2">
+    <div class="col">
         <div class="stat-card-mini">
             <div class="stat-icon green">
                 <i class="bi bi-people"></i>
@@ -59,7 +59,7 @@
         </div>
     </div>
 
-    <div class="col-6 col-md-2">
+    <div class="col">
         <div class="stat-card-mini">
             <div class="stat-icon {{ $bugunYapilanKontroller > 0 ? 'orange' : 'gray' }}">
                 <i class="bi bi-calendar-check"></i>
@@ -71,8 +71,34 @@
         </div>
     </div>
 
+    <!-- Dekantör Çalışma Oranı -->
+    <div class="col">
+        <div class="stat-card-mini" title="{{ $dekantorCalismaOrani['calisan_gun'] }} gün çalıştı / {{ $dekantorCalismaOrani['toplam_gun'] }} gün">
+            <div class="stat-icon" style="background: {{ $dekantorCalismaOrani['oran'] >= 90 ? '#e7ffe7' : ($dekantorCalismaOrani['oran'] >= 70 ? '#fff3cd' : '#ffe7e7') }}; color: {{ $dekantorCalismaOrani['oran'] >= 90 ? '#00aa00' : ($dekantorCalismaOrani['oran'] >= 70 ? '#856404' : '#cc0000') }};">
+                <i class="bi bi-droplet"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Dekantör Çalışma</div>
+                <div class="stat-value">{{ $dekantorCalismaOrani['oran'] }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aylık Tamamlanma Oranı -->
+    <div class="col">
+        <div class="stat-card-mini" title="{{ $aylikTamamlanmaOrani['yesil_gun'] }} yeşil, {{ $aylikTamamlanmaOrani['sari_gun'] }} sarı, {{ $aylikTamamlanmaOrani['kirmizi_gun'] }} kırmızı / {{ $aylikTamamlanmaOrani['toplam_gun'] }} gün">
+            <div class="stat-icon" style="background: {{ $aylikTamamlanmaOrani['oran'] >= 90 ? '#e7ffe7' : ($aylikTamamlanmaOrani['oran'] >= 70 ? '#fff3cd' : '#ffe7e7') }}; color: {{ $aylikTamamlanmaOrani['oran'] >= 90 ? '#00aa00' : ($aylikTamamlanmaOrani['oran'] >= 70 ? '#856404' : '#cc0000') }};">
+                <i class="bi bi-calendar-check-fill"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Aylık Başarı</div>
+                <div class="stat-value">{{ $aylikTamamlanmaOrani['oran'] }}%</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Laboratuvar Kartları -->
-    <div class="col-6 col-md-2">
+    <div class="col">
         <div class="stat-card-mini">
             <div class="stat-icon" style="background: #e7f3ff; color: #0066cc;">
                 <i class="bi bi-droplet-half"></i>
@@ -84,7 +110,7 @@
         </div>
     </div>
 
-    <div class="col-6 col-md-2">
+    <div class="col">
         <div class="stat-card-mini">
             <div class="stat-icon" style="background: {{ $laboratuvarStats['uygunluk_yuzdesi'] >= 80 ? '#e7ffe7' : '#ffe7e7' }}; color: {{ $laboratuvarStats['uygunluk_yuzdesi'] >= 80 ? '#00aa00' : '#cc0000' }};">
                 <i class="bi bi-graph-up"></i>
@@ -92,6 +118,104 @@
             <div class="stat-info">
                 <div class="stat-label">Uygunluk</div>
                 <div class="stat-value">{{ $laboratuvarStats['uygunluk_yuzdesi'] }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debimetre Kartları -->
+    <div class="col">
+        <div class="stat-card-mini" title="Dünkü Giriş Debisi">
+            <div class="stat-icon" style="background: #e3f2fd; color: #1976d2;">
+                <i class="bi bi-arrow-down-circle-fill"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Giriş Debisi</div>
+                <div class="stat-value" style="font-size: 0.9rem;">{{ $girisDebisi['format'] }} m³</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="stat-card-mini" title="Dünkü Çıkış Debisi">
+            <div class="stat-icon" style="background: #f3e5f5; color: #7b1fa2;">
+                <i class="bi bi-arrow-up-circle-fill"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Çıkış Debisi</div>
+                <div class="stat-value" style="font-size: 0.9rem;">{{ $cikisDebisi['format'] }} m³</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="stat-card-mini" title="Dünkü Geri Devir Debisi">
+            <div class="stat-icon" style="background: #fff3e0; color: #f57c00;">
+                <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Geri Devir</div>
+                <div class="stat-value" style="font-size: 0.9rem;">{{ $geriDevirDebisi['format'] }} m³</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dekantör Çalışma Durumu (Sayfanın Ortasına Taşındı) -->
+<div class="row g-3 mb-3">
+    <div class="col-12">
+        <div class="card shadow-sm border-secondary bg-light">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2 gap-md-3 flex-shrink-1">
+                        <div class="text-secondary" style="font-size: 1.25rem;">
+                            <i class="bi bi-pause-circle"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 fw-normal fs-6 text-secondary">Dekantör Çalışma Durumu</h6>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap dekantor-buton-grup">
+                        @php
+                            $dekantorBina = \App\Models\Bina::where('bina_adi', 'LIKE', '%ekant%')->first();
+                            $buguncalismadi = $dekantorBina ? \App\Models\BinaCalismaDurumu::binaCalismiyor($dekantorBina->id, today()) : false;
+                        @endphp
+                        
+                        @if($buguncalismadi)
+                            <button type="button" class="btn btn-success btn-sm px-2 px-md-3" onclick="dekantorCalismayiIptalEt()">
+                                <i class="bi bi-check-circle"></i>
+                                <span class="d-none d-sm-inline ms-1">İptal Et</span>
+                            </button>
+                            <span class="badge bg-warning text-dark d-flex align-items-center gap-1 py-2 px-2">
+                                <i class="bi bi-x-circle"></i>
+                                <span><span class="d-none d-md-inline">Bugün </span>Çalışmadı</span>
+                            </span>
+                        @else
+                            <button type="button" class="btn btn-secondary btn-sm px-2 px-md-3" onclick="dekantorCalismadiModal()">
+                                <i class="bi bi-plus-circle"></i>
+                                <span class="d-none d-sm-inline ms-1">Çalışmadı İşaretle</span>
+                            </button>
+                        @endif
+                        
+                        <button type="button" class="btn btn-outline-secondary btn-sm px-2 px-md-3" onclick="toggleGecmisKayitlar()">
+                            <i class="bi bi-clock-history"></i>
+                            <span class="d-none d-sm-inline ms-1">Geçmiş</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Geçmiş Kayıtlar Liste -->
+                <div id="gecmisKayitlarCollapse" class="collapse mt-3">
+                    <hr class="my-2">
+                    <h6 class="mb-2 text-secondary"><i class="bi bi-clock-history me-1"></i> Çalışmayan Günler (Son 30 Gün)</h6>
+                    <div id="gecmisKayitlarListe" class="small">
+                        <div class="text-center text-muted py-2">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Yükleniyor...</span>
+                            </div>
+                            <div>Yükleniyor...</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -131,6 +255,13 @@
                                  data-status="{{ $dayData['status'] }}"
                                  onclick="showDayDetails('{{ $dayData['date']->format('Y-m-d') }}')">
                                 <span class="day-number">{{ $dayData['day'] }}</span>
+                                @if(isset($dayData['calismayan_binalar']) && !empty($dayData['calismayan_binalar']))
+                                    <span class="badge bg-secondary" 
+                                          style="position: absolute; top: 2px; right: 2px; font-size: 0.5rem; padding: 1px 3px;"
+                                          title="{{ implode(', ', $dayData['calismayan_binalar']) }} çalışmadı">
+                                        <i class="bi bi-building-slash"></i>
+                                    </span>
+                                @endif
                             </div>
                         @endforeach
                     </div>
@@ -149,6 +280,12 @@
                     <div class="legend-item">
                         <span class="legend-color bg-danger"></span>
                         <span class="legend-text">Eksik/Uygunsuz</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color bg-secondary d-flex align-items-center justify-content-center" style="padding: 2px;">
+                            <i class="bi bi-building-slash" style="font-size: 0.6rem;"></i>
+                        </span>
+                        <span class="legend-text">Bina Çalışmadı</span>
                     </div>
                 </div>
             </div>
@@ -549,6 +686,7 @@
     transition: all 0.2s;
     border: 2px solid transparent;
     padding: 2px;
+    position: relative;
 }
 
 .calendar-day-cell.empty {
@@ -884,7 +1022,22 @@ function showDayDetails(date) {
         .then(data => {
             modalDate.textContent = data.date;
             
-            let html = `
+            let html = '';
+            
+            // Çalışmayan binalar varsa göster
+            if (data.calismayan_binalar && data.calismayan_binalar.length > 0) {
+                html += `
+                    <div class="alert alert-info border-info">
+                        <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Çalışmayan Binalar</h6>
+                        <ul class="mb-0 small">
+                            ${data.calismayan_binalar.map(b => `<li><strong>${b}</strong> bu gün çalışmadı olarak işaretlendi</li>`).join('')}
+                        </ul>
+                        <small class="text-muted d-block mt-2">Bu binalar için kontroller yapılması gerekmez.</small>
+                    </div>
+                `;
+            }
+            
+            html += `
                 <div class="row g-3 mb-3">
                     <div class="col-4">
                         <div class="text-center p-3 bg-light rounded">
@@ -938,7 +1091,7 @@ function showDayDetails(date) {
                 `;
             }
             
-            if (data.yapilmasi_gereken == 0) {
+            if (data.yapilmasi_gereken == 0 && (!data.calismayan_binalar || data.calismayan_binalar.length == 0)) {
                 html += `
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
@@ -1021,6 +1174,246 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+</script>
+
+<!-- Dekantör Çalışmadı Modal -->
+<div class="modal fade" id="dekantorCalismadiModal" tabindex="-1" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Dekantör Çalışmadı Onayı
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong>Dikkat!</strong> Bu işlemi onayladığınızda:
+                    <ul class="mb-0 mt-2">
+                        <li>Seçilen tarih için kontroller <strong>gösterilmeyecek</strong></li>
+                        <li>O gün için veri girişi <strong>engellenecek</strong></li>
+                        <li>Raporlarda <strong>"Çalışmadı"</strong> notu görünecek</li>
+                        <li>İsterseniz daha sonra <strong>iptal edebilirsiniz</strong></li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tarih Seçin</label>
+                    <input type="date" id="dekantorTarih" class="form-control" value="{{ today()->format('Y-m-d') }}" max="{{ today()->format('Y-m-d') }}">
+                    <small class="text-muted">Bugün veya geçmiş bir tarih seçebilirsiniz</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Açıklama (Opsiyonel)</label>
+                    <textarea id="dekantorAciklama" class="form-control" rows="2" placeholder="Örn: Bakım çalışması, arıza vb."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>İptal
+                </button>
+                <button type="button" class="btn btn-warning" onclick="dekantorCalismadiOnayla()">
+                    <i class="bi bi-check-circle me-1"></i>Evet, Çalışmadı
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const DEKANTOR_BINA_ID = {{ $dekantorBina ? $dekantorBina->id : 'null' }};
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+
+// Modal'ı aç
+function dekantorCalismadiModal() {
+    if (!DEKANTOR_BINA_ID) {
+        alert('Dekantör binası bulunamadı!');
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('dekantorCalismadiModal'));
+    modal.show();
+}
+
+// Çalışmadı işlemini onayla
+function dekantorCalismadiOnayla() {
+    const tarih = document.getElementById('dekantorTarih').value;
+    const aciklama = document.getElementById('dekantorAciklama').value;
+    
+    if (!tarih) {
+        alert('Lütfen bir tarih seçin!');
+        return;
+    }
+    
+    fetch('{{ route("admin.bina-calisma-durumu.store") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            bina_id: DEKANTOR_BINA_ID,
+            tarih: tarih,
+            aciklama: aciklama
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Modal'ı kapat
+            bootstrap.Modal.getInstance(document.getElementById('dekantorCalismadiModal')).hide();
+            
+            // Başarı mesajı göster ve sayfayı yenile
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+    });
+}
+
+// Çalışmadı kaydını iptal et
+function dekantorCalismayiIptalEt() {
+    if (!confirm('Emin misiniz? "Çalışmadı" kaydı iptal edilecek ve normal kontroller geri gelecek.')) {
+        return;
+    }
+    
+    const today = '{{ today()->format("Y-m-d") }}';
+    
+    fetch('{{ route("admin.bina-calisma-durumu.destroy") }}', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            bina_id: DEKANTOR_BINA_ID,
+            tarih: today
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+    });
+}
+
+// Geçmiş kayıtları aç/kapat
+function toggleGecmisKayitlar() {
+    const collapseElement = document.getElementById('gecmisKayitlarCollapse');
+    const bsCollapse = new bootstrap.Collapse(collapseElement, {
+        toggle: false
+    });
+    
+    if (collapseElement.classList.contains('show')) {
+        bsCollapse.hide();
+    } else {
+        bsCollapse.show();
+        loadGecmisKayitlar();
+    }
+}
+
+// Geçmiş kayıtları yükle
+function loadGecmisKayitlar() {
+    const listeDiv = document.getElementById('gecmisKayitlarListe');
+    
+    if (!DEKANTOR_BINA_ID) {
+        listeDiv.innerHTML = '<div class="alert alert-warning">Dekantör binası bulunamadı!</div>';
+        return;
+    }
+    
+    // Son 30 günlük kayıtları getir
+    const baslangic = new Date();
+    baslangic.setDate(baslangic.getDate() - 30);
+    const bitis = new Date();
+    
+    const baslangicStr = baslangic.toISOString().split('T')[0];
+    const bitisStr = bitis.toISOString().split('T')[0];
+    
+    fetch(`/admin/bina-calisma-durumu/liste/${DEKANTOR_BINA_ID}?baslangic=${baslangicStr}&bitis=${bitisStr}`, {
+        headers: {
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.kayitlar.length > 0) {
+            let html = '<div class="list-group list-group-flush">';
+            data.kayitlar.forEach(kayit => {
+                const tarihObj = new Date(kayit.tarih);
+                const tarihStr = tarihObj.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                        <div>
+                            <strong>${tarihStr}</strong>
+                            ${kayit.aciklama ? '<br><small class="text-muted">' + kayit.aciklama + '</small>' : ''}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteGecmisKayit('${kayit.tarih}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            listeDiv.innerHTML = html;
+        } else {
+            listeDiv.innerHTML = '<div class="alert alert-info mb-0">Son 30 günde çalışmadı kaydı yok.</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        listeDiv.innerHTML = '<div class="alert alert-danger mb-0">Kayıtlar yüklenirken hata oluştu.</div>';
+    });
+}
+
+// Geçmiş kaydı sil
+function deleteGecmisKayit(tarih) {
+    if (!confirm(`${tarih} tarihli "Çalışmadı" kaydını silmek istediğinizden emin misiniz?`)) {
+        return;
+    }
+    
+    fetch('{{ route("admin.bina-calisma-durumu.destroy") }}', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            bina_id: DEKANTOR_BINA_ID,
+            tarih: tarih
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            loadGecmisKayitlar(); // Listeyi yenile
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Bir hata oluştu.');
+    });
+}
 </script>
 
 @endsection

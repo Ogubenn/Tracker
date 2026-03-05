@@ -219,6 +219,25 @@
         </div>
     </div>
 
+    @if($calismayanGunler && $calismayanGunler->count() > 0)
+        <div style="background: #fff3cd; padding: 15px; margin-bottom: 25px; border-radius: 5px; border-left: 4px solid #ffc107;">
+            <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #856404;">
+                ⚠ Çalışmayan Günler
+            </div>
+            <ul style="margin: 0; padding-left: 20px;">
+                @foreach($calismayanGunler as $gun)
+                    <li style="margin-bottom: 8px;">
+                        <strong>{{ \Carbon\Carbon::parse($gun->tarih)->format('d.m.Y') }}</strong> - 
+                        <strong>{{ $gun->bina->bina_adi }}</strong> çalışmadı
+                        @if($gun->aciklama)
+                            <br><span style="font-size: 11px; color: #666;">Not: {{ $gun->aciklama }}</span>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @if($kayitlar && $kayitlar->isNotEmpty())
         @php
             $toplamKontrol = 0;

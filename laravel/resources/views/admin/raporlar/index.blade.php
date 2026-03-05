@@ -61,6 +61,24 @@
 </div>
 
 @if($kayitlar)
+    @if($calismayanGunler && $calismayanGunler->count() > 0)
+        <div class="alert alert-warning mb-3">
+            <h6 class="alert-heading"><i class="bi bi-pause-circle"></i> Çalışmayan Günler</h6>
+            <hr>
+            <ul class="mb-0">
+                @foreach($calismayanGunler as $gun)
+                    <li>
+                        <strong>{{ \Carbon\Carbon::parse($gun->tarih)->format('d.m.Y') }}</strong> - 
+                        <strong>{{ $gun->bina->bina_adi }}</strong> çalışmadı
+                        @if($gun->aciklama)
+                            <br><small class="text-muted">Not: {{ $gun->aciklama }}</small>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+    
     <div class="content-card">
         <div class="content-card-body">
             <h5 class="mb-3">

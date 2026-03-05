@@ -6,6 +6,7 @@ use App\Models\Bina;
 use App\Models\KontrolKaydi;
 use App\Models\KontrolMaddesi;
 use App\Models\User;
+use App\Models\BinaCalismaDurumu;
 use App\Services\FileService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -126,6 +127,11 @@ class PublicKontrolController extends Controller
     private function saveKontrolKayitlari(array $validated, Bina $bina, array $genelDosyalar, string $ipAddress, Request $request): void
     {
         $tarih = Carbon::today();
+        
+        // Bina çalışmadı olarak işaretlenmişse veri girişine izin verme
+        if (BinaCalismaDurumu::binaCalismiyor($bina->id, $tarih)) {
+            throw new \Exception('⚠️ Bu tarih için ' . $bina->bina_adi . ' çalışmadı olarak işaretlenmiş. Veri girişi yapılamaz.');
+        }
 
         // Sadece durum seçilmiş kontrolleri kaydet
         if (!isset($validated['kayitlar']) || empty($validated['kayitlar'])) {

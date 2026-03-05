@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\KontrolKaydi;
 use App\Models\Bina;
+use App\Models\BinaCalismaDurumu;
 use App\Services\PdfService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,8 +27,11 @@ class RaporController extends Controller
         $binaId = $request->get('bina_id');
 
         $kayitlar = $binaId ? $this->getKayitlarByFilters($tarihBaslangic, $tarihBitis, $binaId) : null;
+        
+        // Çalışmayan günleri al
+        $calismayanGunler = $binaId ? $this->getCalismayanGunler($tarihBaslangic, $tarihBitis, $binaId) : collect();
 
-        return view('admin.raporlar.index', compact('binalar', 'tarihBaslangic', 'tarihBitis', 'binaId', 'kayitlar'));
+        return view('admin.raporlar.index', compact('binalar', 'tarihBaslangic', 'tarihBitis', 'binaId', 'kayitlar', 'calismayanGunler'));
     }
 
     public function exportPdf(Request $request): Response
@@ -42,6 +46,7 @@ class RaporController extends Controller
 
         $binalar = $this->getAktifBinalar();
         $kayitlar = $this->getKayitlarByFilters($tarihBaslangic, $tarihBitis, $binaId);
+        $calismayanGunler = $this->getCalismayanGunler($tarihBaslangic, $tarihBitis, $binaId);
         $secilenBina = $binaId === 'all' ? 'Tüm Binalar' : $binalar->find($binaId)?->bina_adi;
 
         $tarihAralik = Carbon::parse($tarihBaslangic)->format('d.m.Y');
@@ -50,7 +55,7 @@ class RaporController extends Controller
         }
 
         // PDF Service kullanarak oluştur
-        $pdfContent = $this->pdfService->generateRaporPdf($kayitlar, $tarihAralik, $secilenBina);
+        $pdfContent = $this->pdfService->generateRaporPdf($kayitlar, $tarihAralik, $secilenBina, $calismayanGunler);
 
         $filename = 'Kontrol_Raporu_' . Carbon::parse($tarihBaslangic)->format('d-m-Y');
         if ($tarihBaslangic !== $tarihBitis) {
@@ -91,5 +96,18 @@ class RaporController extends Controller
         if ($binaId !== 'all') {
             $query->where('bina_id', $binaId);
         }
+    }
+    
+    private function getCalismayanGunler(string $tarihBaslangic, string $tarihBitis, string $binaId): Collection
+    {
+        $query = BinaCalismaDurumu::with(['bina', 'kullanici'])
+            ->whereDate('tarih', '>=', $tarihBaslangic)
+            ->whereDate('tarih', '<=', $tarihBitis);
+            
+        if ($binaId !== 'all') {
+            $query->where('bina_id', $binaId);
+        }
+        
+        return $query->orderBy('tarih', 'desc')->get();
     }
 }

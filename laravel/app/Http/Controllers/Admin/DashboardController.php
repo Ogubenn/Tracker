@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\DashboardNote;
 use App\Models\IsTakvimi;
 use App\Models\LaboratuvarRapor;
+use App\Models\BinaCalismaDurumu;
 use App\Notifications\DashboardNoteNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -37,6 +38,11 @@ class DashboardController extends Controller
             'bugunFotograflar' => $this->getBugunFotograflar(),
             'bugunIsler' => $this->getBugunIsler(),
             'laboratuvarStats' => $this->getLaboratuvarStats(),
+            'dekantorCalismaOrani' => $this->getDekantorCalismaOrani($currentYear, $currentMonth),
+            'aylikTamamlanmaOrani' => $this->getAylikTamamlanmaOrani($currentYear, $currentMonth),
+            'girisDebisi' => $this->getGirisDebisi(),
+            'cikisDebisi' => $this->getCikisDebisi(),
+            'geriDevirDebisi' => $this->getGeriDevirDebisi(),
         ]);
     }
 
@@ -111,12 +117,144 @@ class DashboardController extends Controller
         return KontrolKaydi::whereDate('tarih', Carbon::today())->count();
     }
 
+    private function getDekantorCalismaOrani(int $year, int $month): array
+    {
+        // Ayın toplam gün sayısı
+        $ayinGunSayisi = Carbon::create($year, $month, 1)->daysInMonth;
+
+        // Dekantör binası bitiş saati kontrol maddesi (ID: 37)
+        // Bu kontrol maddesine veri girilen gün sayısı = Dekantör çalışan gün sayısı
+        $calisanGun = KontrolKaydi::where('kontrol_maddesi_id', 37)
+            ->whereYear('tarih', $year)
+            ->whereMonth('tarih', $month)
+            ->whereNotNull('girilen_deger')
+            ->pluck('tarih')
+            ->map(function($tarih) {
+                return $tarih instanceof \Carbon\Carbon ? $tarih->format('Y-m-d') : $tarih;
+            })
+            ->unique()
+            ->count();
+        
+        // Çalışma oranı hesapla (çalışan gün / ayın toplam gün sayısı)
+        $calismaOrani = $ayinGunSayisi > 0 
+            ? round(($calisanGun / $ayinGunSayisi) * 100, 1)
+            : 0;
+
+        return [
+            'oran' => $calismaOrani,
+            'calisan_gun' => $calisanGun,
+            'toplam_gun' => $ayinGunSayisi,
+            'bina_adi' => 'Dekantör',
+        ];
+    }
+
+    private function getAylikTamamlanmaOrani(int $year, int $month): array
+    {
+        $calendar = $this->getCalendarData($year, $month);
+        
+        // Ayın toplam gün sayısını al
+        $ayinGunSayisi = Carbon::create($year, $month, 1)->daysInMonth;
+        
+        $yesilGun = 0;
+        $sariGun = 0;
+        $kirmiziGun = 0;
+        $calisilmisGun = 0;
+        
+        foreach ($calendar['days'] as $dayData) {
+            // Sadece geçmiş ve bugünü say
+            if ($dayData['status'] !== 'future') {
+                // future ve none dışındaki günleri say (çalışılan günler)
+                if ($dayData['status'] !== 'none') {
+                    $calisilmisGun++;
+                    
+                    if ($dayData['status'] === 'success') {
+                        $yesilGun++;
+                    } elseif ($dayData['status'] === 'warning') {
+                        $sariGun++;
+                    } elseif ($dayData['status'] === 'danger') {
+                        $kirmiziGun++;
+                    }
+                }
+            }
+        }
+        
+        // Tamamlanma oranı hesapla (yeşil günler / ayın toplam gün sayısı)
+        $tamamlanmaOrani = $ayinGunSayisi > 0 
+            ? round(($yesilGun / $ayinGunSayisi) * 100, 1)
+            : 0;
+        
+        return [
+            'oran' => $tamamlanmaOrani,
+            'yesil_gun' => $yesilGun,
+            'sari_gun' => $sariGun,
+            'kirmizi_gun' => $kirmiziGun,
+            'toplam_gun' => $ayinGunSayisi,
+            'calisilmis_gun' => $calisilmisGun,
+        ];
+    }
+
     private function getLatestNotes()
     {
         return DashboardNote::with('user')
             ->latest()
             ->take(5)
             ->get();
+    }
+
+    private function getDebimetreFark(int $kontrolMaddesiId): ?float
+    {
+        $bugun = Carbon::today();
+        $dun = Carbon::yesterday();
+        
+        // Bugünkü değer
+        $bugunKayit = KontrolKaydi::where('kontrol_maddesi_id', $kontrolMaddesiId)
+            ->whereDate('tarih', $bugun)
+            ->whereNotNull('girilen_deger')
+            ->first();
+        
+        // Dünkü değer
+        $dunKayit = KontrolKaydi::where('kontrol_maddesi_id', $kontrolMaddesiId)
+            ->whereDate('tarih', $dun)
+            ->whereNotNull('girilen_deger')
+            ->first();
+        
+        if (!$bugunKayit || !$dunKayit) {
+            return null; // Veri eksikse null döner
+        }
+        
+        $fark = floatval($bugunKayit->girilen_deger) - floatval($dunKayit->girilen_deger);
+        
+        return $fark;
+    }
+
+    private function getGirisDebisi(): array
+    {
+        $fark = $this->getDebimetreFark(54);
+        
+        return [
+            'deger' => $fark,
+            'format' => $fark !== null ? number_format($fark, 0, ',', '.') : '-',
+        ];
+    }
+
+    private function getCikisDebisi(): array
+    {
+        $fark = $this->getDebimetreFark(55);
+        
+        return [
+            'deger' => $fark,
+            'format' => $fark !== null ? number_format($fark, 0, ',', '.') : '-',
+        ];
+    }
+
+    private function getGeriDevirDebisi(): array
+    {
+        $fark = $this->getDebimetreFark(73);
+        
+        return [
+            'deger' => $fark,
+            'format' => $fark !== null ? number_format($fark, 0, ',', '.') : '-',
+        ];
     }
 
     private function getBugunFotograflar()
@@ -165,10 +303,21 @@ class DashboardController extends Controller
         // Ay içindeki her gün için kontrol durumunu hesapla
         for ($day = 1; $day <= $daysInMonth; $day++) {
             $date = Carbon::create($year, $month, $day);
+            
+            // Bu gün için çalışmayan binaları kontrol et
+            $calismayanBinalar = BinaCalismaDurumu::calismayanBinalar($date);
+            $calismayanBinaAdlari = [];
+            if (!empty($calismayanBinalar)) {
+                $calismayanBinaAdlari = Bina::whereIn('id', $calismayanBinalar)
+                    ->pluck('bina_adi')
+                    ->toArray();
+            }
+            
             $calendar[] = [
                 'day' => $day,
                 'date' => $date,
                 'status' => $this->getDayStatus($date),
+                'calismayan_binalar' => $calismayanBinaAdlari,
             ];
         }
 
@@ -238,7 +387,11 @@ class DashboardController extends Controller
 
     private function getBugunYapilmasiGerekenKontrolSayisi(Carbon $date): int
     {
+        // Çalışmayan binaları filtrele
+        $calismayanBinalar = BinaCalismaDurumu::calismayanBinalar($date);
+        
         $binalar = Bina::where('aktif_mi', true)
+            ->whereNotIn('id', $calismayanBinalar) // Çalışmayan binaları hariç tut
             ->with(['kontrolMaddeleri' => fn($q) => $q->where('aktif_mi', true)])
             ->get();
 
@@ -283,7 +436,19 @@ class DashboardController extends Controller
     {
         $date = Carbon::parse($request->date);
         
+        // Çalışmayan binaları filtrele
+        $calismayanBinalar = BinaCalismaDurumu::calismayanBinalar($date);
+        
+        // Çalışmayan bina bilgilerini al (modal'da göstermek için)
+        $calismayanBinaDetaylari = [];
+        if (!empty($calismayanBinalar)) {
+            $calismayanBinaDetaylari = Bina::whereIn('id', $calismayanBinalar)
+                ->pluck('bina_adi')
+                ->toArray();
+        }
+        
         $binalar = Bina::where('aktif_mi', true)
+            ->whereNotIn('id', $calismayanBinalar) // Çalışmayan binaları hariç tut
             ->with(['kontrolMaddeleri' => fn($q) => $q->where('aktif_mi', true)])
             ->get();
 
@@ -294,7 +459,7 @@ class DashboardController extends Controller
         foreach ($binalar as $bina) {
             foreach ($bina->kontrolMaddeleri as $madde) {
                 if ($this->kontrolBugunYapilmaliMi($madde, $date)) {
-                    $kontrolKey = $bina->ad . ' - ' . $madde->kontrol_adi;
+                    $kontrolKey = $bina->bina_adi . ' - ' . $madde->kontrol_adi;
                     $yapilmasiGerekenler[] = $kontrolKey;
                     
                     $kontrol = KontrolKaydi::where('bina_id', $bina->id)
@@ -321,6 +486,7 @@ class DashboardController extends Controller
             'eksik' => count($eksikler),
             'eksik_kontroller' => array_values($eksikler),
             'uygunsuz_kontroller' => $uygunsuzlar,
+            'calismayan_binalar' => $calismayanBinaDetaylari,
         ]);
     }
     

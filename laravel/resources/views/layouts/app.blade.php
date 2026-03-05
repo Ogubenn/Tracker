@@ -27,7 +27,7 @@
         <div class="container-fluid">
             @auth
                 @if(auth()->user()->isAdmin())
-                    <button class="btn btn-outline-primary me-2" type="button" onclick="toggleSidebar()">
+                    <button class="btn btn-outline-primary me-2" type="button" id="sidebarToggleBtn" style="z-index: 1; position: relative;">
                         <i class="bi bi-list" style="font-size: 1.25rem;"></i>
                     </button>
                 @endif
@@ -187,6 +187,7 @@
     
     @if(auth()->check() && auth()->user()->isAdmin())
     <script>
+        // Global fonksiyonlar - her zaman erişilebilir
         const isMobile = () => window.innerWidth <= 991;
         
         // Ana menüyü aç/kapat
@@ -194,6 +195,11 @@
             const sidebar = document.getElementById('sidebarMenu');
             const overlay = document.getElementById('sidebarOverlay');
             const body = document.body;
+            
+            if (!sidebar || !overlay) {
+                console.error('Sidebar veya overlay bulunamadı!');
+                return;
+            }
             
             sidebar.classList.toggle('show');
             overlay.classList.toggle('show');
@@ -244,9 +250,23 @@
         
         // DOM yüklendiğinde event listener ekle
         document.addEventListener('DOMContentLoaded', function() {
+            // Hamburger buton event listener
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
+            }
+            
+            // Overlay click handler
             const overlay = document.getElementById('sidebarOverlay');
             if (overlay) {
-                overlay.addEventListener('click', closeSidebar);
+                overlay.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    closeSidebar();
+                });
             }
             
             // Aktif submenu'yu aç

@@ -142,8 +142,14 @@
     <div class="container">
         <div class="header">
             <h1>🔍 Atıksu Takip Sistemi</h1>
-            <p>Kapsamlı Sistem Test ve Diagnostic Panel</p>
+            <p>Kapsamlı Sistem Test ve Diagnostic Panel + Laravel Test Runner</p>
             <p style="font-size: 12px; margin-top: 10px;">Test Zamanı: <?= date('d.m.Y H:i:s') ?></p>
+            <div style="margin-top: 15px;">
+                <a href="?action=run-tests" class="btn">▶️ Laravel Testleri Çalıştır</a>
+                <a href="?action=check-security" class="btn">🔒 Güvenlik Kontrolü</a>
+                <a href="?action=performance" class="btn">⚡ Performans Analizi</a>
+                <a href="?" class="btn">🔄 Yenile</a>
+            </div>
         </div>
 
         <div class="content">
@@ -691,9 +697,356 @@ Kontrol Madde Sayısı: <?= $binaTest->kontrolMaddeleri->count() ?>
 
         </div>
 
+<?php 
+// ============================================
+// LARAVEL TEST RUNNER
+// ============================================
+if (isset($_GET['action']) && $_GET['action'] === 'run-tests' && $laravelBooted): 
+?>
+<div class="section">
+    <div class="section-header">
+        <span>🧪 Laravel Test Sonuçları</span>
+        <span class="badge badge-info">PHPUnit</span>
+    </div>
+    <div class="section-body">
+        <?php
+        $testOutput = '';
+        $testResult = 0;
+        
+        // Test çalıştır
+        $basePath = base_path();
+        $command = "cd " . escapeshellarg($basePath) . " && php artisan test 2>&1";
+        
+        exec($command, $testOutput, $testResult);
+        $testOutput = implode("\n", $testOutput);
+        ?>
+        
+        <div class="alert <?= $testResult === 0 ? 'alert-success' : 'alert-error' ?>">
+            <strong><?= $testResult === 0 ? '✅ Tüm Testler Başarılı!' : '❌ Bazı Testler Başarısız!' ?></strong>
+        </div>
+        
+        <div class="code-block" style="max-height: 500px; overflow-y: auto;">
+<?= htmlspecialchars($testOutput) ?>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <a href="?" class="btn">← Geri Dön</a>
+            <a href="?action=run-tests" class="btn">🔄 Tekrar Çalıştır</a>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php 
+// ============================================
+// GÜVENLİK KONTROLÜ
+// ============================================
+if (isset($_GET['action']) && $_GET['action'] === 'check-security' && $laravelBooted): 
+?>
+<div class="section">
+    <div class="section-header">
+        <span>🔒 Güvenlik Analizi</span>
+        <span class="badge badge-warning">SECURITY</span>
+    </div>
+    <div class="section-body">
+        <?php
+        $securityIssues = [];
+        $securityScore = 100;
+        
+        // 1. Debug mode kontrolü
+        if (config('app.debug') === true) {
+            $securityIssues[] = [
+                'severity' => 'KRITIK',
+                'issue' => 'APP_DEBUG=true',
+                'detail' => 'Production ortamında debug mode açık! Hassas bilgiler görünebilir.',
+                'fix' => '.env dosyasında APP_DEBUG=false yapın'
+            ];
+            $securityScore -= 20;
+        }
+        
+        // 2. Environment kontrolü
+        if (config('app.env') !== 'production') {
+            $securityIssues[] = [
+                'severity' => 'UYARI',
+                'issue' => 'APP_ENV=' . config('app.env'),
+                'detail' => 'Production ortamında environment "production" olmalı.',
+                'fix' => '.env dosyasında APP_ENV=production yapın'
+            ];
+            $securityScore -= 10;
+        }
+        
+        // 3. Session secure cookie kontrolü
+        if (!config('session.secure')) {
+            $securityIssues[] = [
+                'severity' => 'UYARI',
+                'issue' => 'Session cookies güvenli değil',
+                'detail' => 'HTTPS kullanılmıyorsa session çalınabilir.',
+                'fix' => '.env dosyasında SESSION_SECURE_COOKIE=true yapın (SSL sonrası)'
+            ];
+            $securityScore -= 10;
+        }
+        
+        // 4. Test dosyaları kontrolü
+        $publicPath = public_path();
+        $testFiles = [
+            'sistem-test.php',
+            'test-scheduled-tasks.php',
+            'test-dompdf-direct.php',
+            'fix-pdf.php',
+            'migrate-fix.php',
+            'db-test.php'
+        ];
+        
+        $foundTestFiles = [];
+        foreach ($testFiles as $file) {
+            if (file_exists($publicPath . '/' . $file)) {
+                $foundTestFiles[] = $file;
+            }
+        }
+        
+        if (count($foundTestFiles) > 0) {
+            $securityIssues[] = [
+                'severity' => 'KRITIK',
+                'issue' => count($foundTestFiles) . ' adet test dosyası bulundu',
+                'detail' => 'Production\'da test dosyaları olmamalı: ' . implode(', ', $foundTestFiles),
+                'fix' => 'clean-test-files.ps1 scriptini çalıştırın veya manuel silin'
+            ];
+            $securityScore -= 30;
+        }
+        
+        // 5. Storage izinleri
+        $storagePath = storage_path();
+        if (!is_writable($storagePath)) {
+            $securityIssues[] = [
+                'severity' => 'HATA',
+                'issue' => 'Storage dizini yazılabilir değil',
+                'detail' => 'Log ve cache dosyaları yazılamaz.',
+                'fix' => 'chmod -R 775 storage/'
+            ];
+            $securityScore -= 15;
+        }
+        
+        // 6. .env dosyası public erişimi
+        if (file_exists(public_path('.env'))) {
+            $securityIssues[] = [
+                'severity' => 'KRİTİK',
+                'issue' => '.env dosyası public klasöründe!',
+                'detail' => 'Veritabanı şifreleri ve API anahtarları erişilebilir durumda!',
+                'fix' => '.env dosyasını Laravel root klasörüne taşıyın'
+            ];
+            $securityScore -= 40;
+        }
+        
+        // 7. APP_KEY kontrolü
+        if (empty(config('app.key'))) {
+            $securityIssues[] = [
+                'severity' => 'KRITIK',
+                'issue' => 'APP_KEY tanımlı değil',
+                'detail' => 'Şifreleme yapılamaz, session güvenli değil.',
+                'fix' => 'php artisan key:generate çalıştırın'
+            ];
+            $securityScore -= 30;
+        }
+        ?>
+        
+        <div class="stats">
+            <div class="stat-card" style="background: <?= $securityScore >= 80 ? 'linear-gradient(135deg, #4caf50, #45a047)' : ($securityScore >= 60 ? 'linear-gradient(135deg, #ff9800, #f57c00)' : 'linear-gradient(135deg, #f44336, #e53935)') ?>">
+                <div class="stat-number"><?= $securityScore ?>/100</div>
+                <div class="stat-label">Güvenlik Skoru</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= count($securityIssues) ?></div>
+                <div class="stat-label">Güvenlik Sorunu</div>
+            </div>
+        </div>
+        
+        <?php if (count($securityIssues) === 0): ?>
+            <div class="alert alert-success">
+                <strong>✅ Güvenlik Kontrolü Başarılı!</strong><br>
+                Kritik güvenlik sorunu bulunamadı.
+            </div>
+        <?php else: ?>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Önem</th>
+                        <th>Sorun</th>
+                        <th>Detay</th>
+                        <th>Çözüm</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($securityIssues as $issue): ?>
+                        <tr>
+                            <td>
+                                <span class="badge <?= 
+                                    $issue['severity'] === 'KRITIK' ? 'badge-error' : 
+                                    ($issue['severity'] === 'UYARI' ? 'badge-warning' : 'badge-info') 
+                                ?>">
+                                    <?= $issue['severity'] ?>
+                                </span>
+                            </td>
+                            <td><strong><?= htmlspecialchars($issue['issue']) ?></strong></td>
+                            <td><?= htmlspecialchars($issue['detail']) ?></td>
+                            <td><code style="font-size: 11px;"><?= htmlspecialchars($issue['fix']) ?></code></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+        
+        <div style="margin-top: 20px;">
+            <a href="?" class="btn">← Geri Dön</a>
+            <a href="?action=check-security" class="btn">🔄 Tekrar Kontrol Et</a>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php 
+// ============================================
+// PERFORMANS ANALİZİ
+// ============================================
+if (isset($_GET['action']) && $_GET['action'] === 'performance' && $laravelBooted): 
+?>
+<div class="section">
+    <div class="section-header">
+        <span>⚡ Performans Analizi</span>
+        <span class="badge badge-info">SPEED</span>
+    </div>
+    <div class="section-body">
+        <?php
+        $performanceTests = [];
+        
+        // 1. Database query hızı
+        $start = microtime(true);
+        DB::table('binalar')->count();
+        $dbTime = (microtime(true) - $start) * 1000;
+        $performanceTests[] = [
+            'test' => 'Database Query',
+            'time' => round($dbTime, 2) . ' ms',
+            'status' => $dbTime < 100 ? 'HIZLI' : ($dbTime < 300 ? 'ORTA' : 'YAVAŞ')
+        ];
+        
+        // 2. Cache yazma hızı
+        $start = microtime(true);
+        Cache::put('test_key', 'test_value', 10);
+        $cacheWriteTime = (microtime(true) - $start) * 1000;
+        $performanceTests[] = [
+            'test' => 'Cache Write',
+            'time' => round($cacheWriteTime, 2) . ' ms',
+            'status' => $cacheWriteTime < 10 ? 'HIZLI' : ($cacheWriteTime < 50 ? 'ORTA' : 'YAVAŞ')
+        ];
+        
+        // 3. Cache okuma hızı
+        $start = microtime(true);
+        Cache::get('test_key');
+        $cacheReadTime = (microtime(true) - $start) * 1000;
+        $performanceTests[] = [
+            'test' => 'Cache Read',
+            'time' => round($cacheReadTime, 2) . ' ms',
+            'status' => $cacheReadTime < 5 ? 'HIZLI' : ($cacheReadTime < 20 ? 'ORTA' : 'YAVAŞ')
+        ];
+        
+        // 4. View render hızı
+        $start = microtime(true);
+        view('admin.dashboard')->render();
+        $viewTime = (microtime(true) - $start) * 1000;
+        $performanceTests[] = [
+            'test' => 'View Render (Dashboard)',
+            'time' => round($viewTime, 2) . ' ms',
+            'status' => $viewTime < 200 ? 'HIZLI' : ($viewTime < 500 ? 'ORTA' : 'YAVAŞ')
+        ];
+        
+        // 5. File sistem hızı
+        $start = microtime(true);
+        file_exists(storage_path('logs/laravel.log'));
+        $fileTime = (microtime(true) - $start) * 1000;
+        $performanceTests[] = [
+            'test' => 'File System Access',
+            'time' => round($fileTime, 2) . ' ms',
+            'status' => $fileTime < 5 ? 'HIZLI' : ($fileTime < 20 ? 'ORTA' : 'YAVAŞ')
+        ];
+        
+        // Ortalama hesapla
+        $avgTime = array_sum(array_map(function($t) {
+            return (float) str_replace(' ms', '', $t['time']);
+        }, $performanceTests)) / count($performanceTests);
+        ?>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number"><?= round($avgTime, 2) ?> ms</div>
+                <div class="stat-label">Ortalama Yanıt Süresi</div>
+            </div>
+            <div class="stat-card" style="background: <?= config('cache.default') === 'redis' ? 'linear-gradient(135deg, #4caf50, #45a047)' : 'linear-gradient(135deg, #ff9800, #f57c00)' ?>">
+                <div class="stat-number"><?= strtoupper(config('cache.default')) ?></div>
+                <div class="stat-label">Cache Driver</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= strtoupper(config('queue.default')) ?></div>
+                <div class="stat-label">Queue Driver</div>
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Test</th>
+                    <th>Süre</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($performanceTests as $test): ?>
+                    <tr>
+                        <td><?= $test['test'] ?></td>
+                        <td><strong><?= $test['time'] ?></strong></td>
+                        <td>
+                            <span class="badge <?= 
+                                $test['status'] === 'HIZLI' ? 'badge-success' : 
+                                ($test['status'] === 'ORTA' ? 'badge-warning' : 'badge-error') 
+                            ?>">
+                                <?= $test['status'] ?>
+                            </span>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 20px;">
+            <h4>🚀 Performans Önerileri:</h4>
+            <ul style="margin-top: 10px; line-height: 2;">
+                <?php if (config('cache.default') === 'file'): ?>
+                <li><strong>Cache Driver:</strong> Production'da Redis kullanın (file yerine)</li>
+                <?php endif; ?>
+                <?php if (config('queue.default') === 'sync'): ?>
+                <li><strong>Queue Driver:</strong> Mail gönderimleri için database/redis queue kullanın</li>
+                <?php endif; ?>
+                <?php if ($dbTime > 100): ?>
+                <li><strong>Database:</strong> Yavaş sorgular için index ekleyin</li>
+                <?php endif; ?>
+                <?php if (!config('app.debug')): ?>
+                <li><strong>Opcache:</strong> PHP Opcache aktif edin (ini ayarları)</li>
+                <?php endif; ?>
+                <li><strong>CDN:</strong> Statik dosyalar için CDN kullanmayı düşünün</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <a href="?" class="btn">← Geri Dön</a>
+            <a href="?action=performance" class="btn">🔄 Tekrar Test Et</a>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+        </div>
+
         <div class="footer">
-            <strong>Atıksu Takip Sistemi</strong> - Kapsamlı Test Panel<br>
-            Bu dosyayı güvenlik nedeniyle production'da silmeyi unutmayın!<br>
+            <strong>Atıksu Takip Sistemi</strong> - Gelişmiş Test & Diagnostic Panel<br>
+            <span class="badge badge-error">⚠️ PRODUCTION'DA SİLİNMELİ</span><br>
             <small>Dosya: <?= __FILE__ ?></small>
         </div>
     </div>

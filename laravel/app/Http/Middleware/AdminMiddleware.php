@@ -19,7 +19,8 @@ class AdminMiddleware
             return redirect()->route('login')->with('error', 'Lütfen giriş yapın.');
         }
 
-        if (auth()->user()->rol !== 'admin') {
+        // Admin veya personel yetkisi kontrolü
+        if (!in_array(auth()->user()->rol, ['admin', 'personel'])) {
             abort(403, 'Bu sayfaya erişim yetkiniz yok.');
         }
 

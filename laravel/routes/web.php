@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\IsTakvimiController;
 use App\Http\Controllers\Admin\ArsivlenmisIsController;
 use App\Http\Controllers\Admin\PersonelDevamController;
 use App\Http\Controllers\Admin\LaboratuvarController;
+use App\Http\Controllers\Admin\BinaCalismaDurumuController;
 use App\Http\Controllers\PublicKontrolController;
 use App\Http\Controllers\Personel\DashboardController as PersonelDashboard;
 use Illuminate\Support\Facades\Route;
@@ -471,6 +472,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/binalar/bulk-delete', [BinaController::class, 'bulkDestroy'])->name('binalar.bulk-delete');
     Route::post('/binalar/{bina}/regenerate-qr', [BinaController::class, 'regenerateQr'])->name('binalar.regenerate-qr');
     Route::resource('binalar', BinaController::class)->parameters(['binalar' => 'bina']);
+    
+    // Bina Çalışma Durumu (Dekantör Çalışmadı Sistemi)
+    Route::post('/bina-calisma-durumu', [BinaCalismaDurumuController::class, 'store'])->name('bina-calisma-durumu.store');
+    Route::delete('/bina-calisma-durumu', [BinaCalismaDurumuController::class, 'destroy'])->name('bina-calisma-durumu.destroy');
+    Route::get('/bina-calisma-durumu/check/{bina}/{tarih}', [BinaCalismaDurumuController::class, 'check'])->name('bina-calisma-durumu.check');
+    Route::get('/bina-calisma-durumu/liste/{bina}', [BinaCalismaDurumuController::class, 'liste'])->name('bina-calisma-durumu.liste');
     
     // Kontrol Kayıtları (Onay Sistemi)
     Route::get('/kontrol-kayitlari', [KontrolKaydiController::class, 'index'])->name('kontrol-kayitlari.index');

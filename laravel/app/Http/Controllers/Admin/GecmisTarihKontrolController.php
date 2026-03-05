@@ -7,6 +7,7 @@ use App\Models\Bina;
 use App\Models\KontrolKaydi;
 use App\Models\KontrolMaddesi;
 use App\Models\User;
+use App\Models\BinaCalismaDurumu;
 use App\Services\FileService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -73,6 +74,14 @@ class GecmisTarihKontrolController extends Controller
         try {
             $tarih = Carbon::parse($validated['tarih']);
             $kaydedilenSayisi = 0;
+            
+            // Bina çalışmadı olarak işaretlenmişse veri girişine izin verme
+            if (BinaCalismaDurumu::binaCalismiyor($validated['bina_id'], $tarih)) {
+                $bina = Bina::find($validated['bina_id']);
+                return redirect()
+                    ->back()
+                    ->with('error', '⚠️ Bu tarih için ' . $bina->bina_adi . ' çalışmadı olarak işaretlenmiş. Veri girişi yapılamaz.');
+            }
 
             if (isset($validated['kayitlar']) && !empty($validated['kayitlar'])) {
                 foreach ($validated['kayitlar'] as $index => $kayit) {

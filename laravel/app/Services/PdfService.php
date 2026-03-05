@@ -39,16 +39,18 @@ class PdfService
      * @param Collection $kayitlar Kontrol kayıtları (gruplu)
      * @param string $tarihAralik Tarih aralığı metni (örn: "01.01.2026 - 15.01.2026")
      * @param string $secilenBina Seçilen bina adı veya "Tüm Binalar"
+     * @param Collection $calismayanGunler Çalışmayan günler koleksiyonu
      * @return string PDF binary içeriği
      * @throws \Exception DomPDF hataları
      */
-    public function generateRaporPdf(Collection $kayitlar, string $tarihAralik, string $secilenBina): string
+    public function generateRaporPdf(Collection $kayitlar, string $tarihAralik, string $secilenBina, Collection $calismayanGunler = null): string
     {
         // View'i HTML'e çevir
         $html = view('admin.raporlar.pdf', [
             'kayitlar' => $kayitlar,
             'tarihAralik' => $tarihAralik,
             'secilenBina' => $secilenBina,
+            'calismayanGunler' => $calismayanGunler ?? collect(),
         ])->render();
         
         // PDF oluştur

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Bina;
 use App\Models\KontrolKaydi;
 use App\Models\KontrolMaddesi;
+use App\Models\BinaCalismaDurumu;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\RedirectResponse;
@@ -98,9 +99,19 @@ class DashboardController extends Controller
 
     private function saveKontrolKaydi(array $validated): void
     {
+        // Kontrol maddesinden bina bilgisini al
+        $kontrolMaddesi = KontrolMaddesi::find($validated['kontrol_maddesi_id']);
+        $bina = $kontrolMaddesi->bina;
+        $tarih = Carbon::today();
+        
+        // Bina çalışmadı olarak işaretlenmişse veri girişine izin verme
+        if (BinaCalismaDurumu::binaCalismiyor($bina->id, $tarih)) {
+            throw new Exception('⚠️ Bu tarih için ' . $bina->bina_adi . ' çalışmadı olarak işaretlenmiş. Veri girişi yapılamaz.');
+        }
+        
         KontrolKaydi::create([
             'kontrol_maddesi_id' => $validated['kontrol_maddesi_id'],
-            'tarih' => Carbon::today(),
+            'tarih' => $tarih,
             'girilen_deger' => $validated['girilen_deger'],
             'yapan_kullanici_id' => Auth::id(),
         ]);
