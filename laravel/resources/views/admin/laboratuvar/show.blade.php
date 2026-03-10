@@ -34,12 +34,20 @@
                         <td>{{ $rapor->tesis_adi }}</td>
                     </tr>
                     <tr>
-                        <th>Numune Alma Noktası:</th>
-                        <td>{{ $rapor->numune_alma_noktasi ?? '-' }}</td>
+                        <th>Numunenin Cinsi ve Adı:</th>
+                        <td>{{ $rapor->numune_cinsi_adi ?? '-' }}</td>
                     </tr>
                     <tr>
-                        <th>Numune Alma Tarihi:</th>
-                        <td>{{ $rapor->numune_alma_tarihi ? \Carbon\Carbon::parse($rapor->numune_alma_tarihi)->format('d.m.Y') : '-' }}</td>
+                        <th>Numune Alma Noktası ve Sayısı:</th>
+                        <td>{{ $rapor->numune_alma_noktasi_sayisi ?? '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Numune Alma Başlangıç:</th>
+                        <td>{{ $rapor->numune_alma_tarihi ? \Carbon\Carbon::parse($rapor->numune_alma_tarihi)->format('d.m.Y H:i') : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Numune Alma Bitiş:</th>
+                        <td>{{ $rapor->numune_alma_tarihi_bitis ? \Carbon\Carbon::parse($rapor->numune_alma_tarihi_bitis)->format('d.m.Y H:i') : '-' }}</td>
                     </tr>
                     <tr>
                         <th>Numune Alma Şekli:</th>

@@ -16,9 +16,14 @@ class LaboratuvarRapor extends Model
     protected $fillable = [
         'rapor_no',
         'rapor_tarihi',
+        'teklif_tarihi',
+        'teklif_no',
         'tesis_adi',
+        'numune_cinsi_adi',
         'numune_alma_noktasi',
+        'numune_alma_noktasi_sayisi',
         'numune_alma_tarihi',
+        'numune_alma_tarihi_bitis',
         'numune_alma_sekli',
         'numune_gelis_sekli',
         'numune_ambalaj',
@@ -34,7 +39,9 @@ class LaboratuvarRapor extends Model
 
     protected $casts = [
         'rapor_tarihi' => 'date',
+        'teklif_tarihi' => 'date',
         'numune_alma_tarihi' => 'datetime',
+        'numune_alma_tarihi_bitis' => 'datetime',
         'lab_gelis_tarihi' => 'datetime',
         'analiz_baslangic' => 'date',
         'analiz_bitis' => 'date',
@@ -65,14 +72,14 @@ class LaboratuvarRapor extends Model
     // PDF varmı kontrolü
     public function hasPdf(): bool
     {
-        return !empty($this->pdf_dosya) && file_exists(storage_path('app/public/' . $this->pdf_dosya));
+        return !empty($this->pdf_dosya) && \Storage::disk('public')->exists($this->pdf_dosya);
     }
 
-    // PDF URL
+    // PDF URL — controller üzerinden stream edilir
     public function getPdfUrl(): ?string
     {
-        if ($this->hasPdf()) {
-            return asset('storage/' . $this->pdf_dosya);
+        if (!empty($this->pdf_dosya)) {
+            return route('admin.laboratuvar.pdf', $this->id);
         }
         return null;
     }

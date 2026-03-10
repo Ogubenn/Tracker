@@ -9,9 +9,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class LaboratuvarController extends Controller
 {
@@ -51,24 +48,29 @@ class LaboratuvarController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'rapor_no' => 'required|string|unique:laboratuvar_raporlar,rapor_no',
-            'rapor_tarihi' => 'required|date',
-            'olusturan_id' => 'required|exists:users,id',
-            'tesis_adi' => 'required|string',
+            'rapor_no' => 'nullable|string|unique:laboratuvar_raporlar,rapor_no',
+            'rapor_tarihi' => 'nullable|date',
+            'teklif_tarihi' => 'nullable|date',
+            'teklif_no' => 'nullable|string',
+            'olusturan_id' => 'nullable|exists:users,id',
+            'tesis_adi' => 'nullable|string',
+            'numune_cinsi_adi' => 'nullable|string',
             'numune_alma_noktasi' => 'nullable|string',
+            'numune_alma_noktasi_sayisi' => 'nullable|string',
             'numune_alma_tarihi' => 'nullable|date',
-            'numune_alma_sekli' => 'nullable|string',
+            'numune_alma_tarihi_bitis' => 'nullable|date',
+            'numune_alma_sekli' => 'nullable|in:24 Saatlik Kompozit,12 Saatlik Kompozit,Anlık Numune',
             'numune_gelis_sekli' => 'nullable|string',
             'numune_ambalaj' => 'nullable|string',
             'numune_numarasi' => 'nullable|string',
             'lab_gelis_tarihi' => 'nullable|date',
-            'sahit_numune' => 'nullable|string',
+            'sahit_numune' => 'nullable|in:Var,Yok',
             'analiz_baslangic' => 'nullable|date',
             'analiz_bitis' => 'nullable|date',
             'notlar' => 'nullable|string',
             'pdf_dosya' => 'nullable|file|mimes:pdf|max:10240',
-            'parametreler' => 'required|array|min:1',
-            'parametreler.*.parametre_adi' => 'required|string',
+            'parametreler' => 'nullable|array',
+            'parametreler.*.parametre_adi' => 'nullable|string',
             'parametreler.*.birim' => 'nullable|string',
             'parametreler.*.analiz_sonucu' => 'nullable|numeric',
             'parametreler.*.limit_degeri' => 'nullable|string',
@@ -89,9 +91,14 @@ class LaboratuvarController extends Controller
             $rapor = LaboratuvarRapor::create([
                 'rapor_no' => $validated['rapor_no'],
                 'rapor_tarihi' => $validated['rapor_tarihi'],
+                'teklif_tarihi' => $validated['teklif_tarihi'] ?? null,
+                'teklif_no' => $validated['teklif_no'] ?? null,
                 'tesis_adi' => $validated['tesis_adi'],
+                'numune_cinsi_adi' => $validated['numune_cinsi_adi'] ?? null,
                 'numune_alma_noktasi' => $validated['numune_alma_noktasi'] ?? null,
+                'numune_alma_noktasi_sayisi' => $validated['numune_alma_noktasi_sayisi'] ?? null,
                 'numune_alma_tarihi' => $validated['numune_alma_tarihi'] ?? null,
+                'numune_alma_tarihi_bitis' => $validated['numune_alma_tarihi_bitis'] ?? null,
                 'numune_alma_sekli' => $validated['numune_alma_sekli'] ?? null,
                 'numune_gelis_sekli' => $validated['numune_gelis_sekli'] ?? null,
                 'numune_ambalaj' => $validated['numune_ambalaj'] ?? null,
@@ -102,11 +109,11 @@ class LaboratuvarController extends Controller
                 'analiz_bitis' => $validated['analiz_bitis'] ?? null,
                 'notlar' => $validated['notlar'] ?? null,
                 'pdf_dosya' => $pdfPath,
-                'olusturan_id' => $validated['olusturan_id'],
+                'olusturan_id' => $validated['olusturan_id'] ?? null,
             ]);
 
             // Parametreleri ekle
-            foreach ($validated['parametreler'] as $paramData) {
+            foreach (($validated['parametreler'] ?? []) as $paramData) {
                 $parametre = $rapor->parametreler()->create([
                     'parametre_adi' => $paramData['parametre_adi'],
                     'birim' => $paramData['birim'] ?? null,
@@ -163,23 +170,28 @@ class LaboratuvarController extends Controller
 
         $validated = $request->validate([
             'rapor_no' => 'required|string|unique:laboratuvar_raporlar,rapor_no,' . $id,
-            'rapor_tarihi' => 'required|date',
-            'tesis_adi' => 'required|string',
+            'rapor_tarihi' => 'nullable|date',
+            'teklif_tarihi' => 'nullable|date',
+            'teklif_no' => 'nullable|string',
+            'tesis_adi' => 'nullable|string',
+            'numune_cinsi_adi' => 'nullable|string',
             'numune_alma_noktasi' => 'nullable|string',
+            'numune_alma_noktasi_sayisi' => 'nullable|string',
             'numune_alma_tarihi' => 'nullable|date',
-            'numune_alma_sekli' => 'nullable|string',
+            'numune_alma_tarihi_bitis' => 'nullable|date',
+            'numune_alma_sekli' => 'nullable|in:24 Saatlik Kompozit,12 Saatlik Kompozit,Anlık Numune',
             'numune_gelis_sekli' => 'nullable|string',
             'numune_ambalaj' => 'nullable|string',
             'numune_numarasi' => 'nullable|string',
             'lab_gelis_tarihi' => 'nullable|date',
-            'sahit_numune' => 'nullable|string',
+            'sahit_numune' => 'nullable|in:Var,Yok',
             'analiz_baslangic' => 'nullable|date',
             'analiz_bitis' => 'nullable|date',
             'notlar' => 'nullable|string',
             'pdf_dosya' => 'nullable|file|mimes:pdf|max:10240',
-            'parametreler' => 'required|array|min:1',
+            'parametreler' => 'nullable|array',
             'parametreler.*.id' => 'nullable|exists:laboratuvar_parametreler,id',
-            'parametreler.*.parametre_adi' => 'required|string',
+            'parametreler.*.parametre_adi' => 'nullable|string',
             'parametreler.*.birim' => 'nullable|string',
             'parametreler.*.analiz_sonucu' => 'nullable|numeric',
             'parametreler.*.limit_degeri' => 'nullable|string',
@@ -188,26 +200,26 @@ class LaboratuvarController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
-            // PDF yükleme
+            // PDF yükleme — transaction DIŞINDA, bağımsız kaydedilir
             if ($request->hasFile('pdf_dosya')) {
-                // Eski PDF'yi sil
                 if ($rapor->pdf_dosya) {
                     Storage::disk('public')->delete($rapor->pdf_dosya);
                 }
-                
-                $validated['pdf_dosya'] = $request->file('pdf_dosya')->store('laboratuvar_raporlar', 'public');
+                $rapor->pdf_dosya = $request->file('pdf_dosya')->store('laboratuvar_raporlar', 'public');
+                $rapor->save();
             }
 
-            // Raporu güncelle
-            $rapor->update($validated);
+            DB::beginTransaction();
+
+            // Raporu güncelle (pdf_dosya hariç)
+            $updateData = collect($validated)->except(['parametreler', 'pdf_dosya'])->toArray();
+            $rapor->update($updateData);
 
             // Mevcut parametreleri sil
             $rapor->parametreler()->delete();
 
             // Yeni parametreleri ekle
-            foreach ($validated['parametreler'] as $paramData) {
+            foreach (($validated['parametreler'] ?? []) as $paramData) {
                 $parametre = $rapor->parametreler()->create([
                     'parametre_adi' => $paramData['parametre_adi'],
                     'birim' => $paramData['birim'] ?? null,
@@ -239,9 +251,25 @@ class LaboratuvarController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function pdfGoster($id)
     {
-        try {
+        $rapor = LaboratuvarRapor::findOrFail($id);
+
+        if (!$rapor->pdf_dosya || !Storage::disk('public')->exists($rapor->pdf_dosya)) {
+            abort(404, 'PDF bulunamadı.');
+        }
+
+        $path = Storage::disk('public')->path($rapor->pdf_dosya);
+        $dosyaAdi = 'rapor-' . ($rapor->rapor_no ?? $rapor->id) . '.pdf';
+
+        return response()->file($path, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $dosyaAdi . '"',
+        ]);
+    }
+
+    public function destroy($id)
+    {        try {
             $rapor = LaboratuvarRapor::findOrFail($id);
 
             // PDF'yi sil
@@ -257,113 +285,6 @@ class LaboratuvarController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Laboratuvar raporu silme hatası: ' . $e->getMessage());
-            
-            return redirect()
-                ->back()
-                ->with('error', 'Hata: ' . $e->getMessage());
-        }
-    }
-
-    public function excelImport()
-    {
-        return view('admin.laboratuvar.excel-import');
-    }
-
-    public function excelImportStore(Request $request)
-    {
-        $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $file = $request->file('excel_file');
-            $spreadsheet = IOFactory::load($file->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray();
-
-            // İlk satır başlık
-            $header = array_shift($rows);
-
-            $kaydedilenSayisi = 0;
-            $hatalar = [];
-
-            foreach ($rows as $rowIndex => $row) {
-                $rowNumber = $rowIndex + 2; // Excel'de satır numarası
-
-                // Boş satırları atla
-                if (empty(array_filter($row))) {
-                    continue;
-                }
-
-                try {
-                    // Excel'den veri çek
-                    $raporNo = $row[0] ?? null;
-                    $raporTarihi = $row[1] ?? null;
-                    $tesisAdi = $row[2] ?? null;
-                    $parametreAdi = $row[3] ?? null;
-                    $birim = $row[4] ?? null;
-                    $analizSonucu = $row[5] ?? null;
-                    $limitDegeri = $row[6] ?? null;
-                    $analizMetodu = $row[7] ?? null;
-                    $tabloNo = $row[8] ?? null;
-
-                    if (empty($raporNo) || empty($parametreAdi)) {
-                        $hatalar[] = "Satır {$rowNumber}: Rapor No veya Parametre Adı boş";
-                        continue;
-                    }
-
-                    // Rapor var mı kontrol et
-                    $rapor = LaboratuvarRapor::where('rapor_no', $raporNo)->first();
-
-                    if (!$rapor) {
-                        // Yeni rapor oluştur
-                        $rapor = LaboratuvarRapor::create([
-                            'rapor_no' => $raporNo,
-                            'rapor_tarihi' => $raporTarihi ? Carbon::parse($raporTarihi) : now(),
-                            'tesis_adi' => $tesisAdi ?? 'Belirtilmemiş',
-                            'olusturan_id' => auth()->id(),
-                        ]);
-                    }
-
-                    // Parametre ekle
-                    $parametre = $rapor->parametreler()->create([
-                        'parametre_adi' => $parametreAdi,
-                        'birim' => $birim,
-                        'analiz_sonucu' => is_numeric($analizSonucu) ? $analizSonucu : null,
-                        'limit_degeri' => $limitDegeri,
-                        'analiz_metodu' => $analizMetodu,
-                        'tablo_no' => is_numeric($tabloNo) ? $tabloNo : null,
-                    ]);
-
-                    $uygunluk = $parametre->hesaplaUygunluk();
-                    $parametre->update(['uygunluk' => $uygunluk]);
-
-                    $kaydedilenSayisi++;
-
-                } catch (\Exception $e) {
-                    $hatalar[] = "Satır {$rowNumber}: " . $e->getMessage();
-                }
-            }
-
-            DB::commit();
-
-            $mesaj = "✅ {$kaydedilenSayisi} kayıt başarıyla içe aktarıldı.";
-            
-            if (count($hatalar) > 0) {
-                $mesaj .= " " . count($hatalar) . " satırda hata oluştu.";
-            }
-
-            return redirect()
-                ->route('admin.laboratuvar.index')
-                ->with('success', $mesaj)
-                ->with('hatalar', $hatalar);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            \Log::error('Excel import hatası: ' . $e->getMessage());
             
             return redirect()
                 ->back()
@@ -403,62 +324,4 @@ class LaboratuvarController extends Controller
         return view('admin.laboratuvar.grafikler', compact('parametreListesi', 'seciliParametre', 'veriler'));
     }
 
-    public function excelTemplate()
-    {
-        try {
-            // CSV formatında indir (PhpSpreadsheet yok)
-            $fileName = 'laboratuvar_rapor_template_' . now()->format('Y-m-d') . '.csv';
-            
-            $headers = [
-                'Rapor No',
-                'Rapor Tarihi',
-                'Tesis Adı',
-                'Parametre Adı',
-                'Birim',
-                'Analiz Sonucu',
-                'Limit Değeri',
-                'Analiz Metodu',
-                'Tablo No'
-            ];
-            
-            $ornek = [
-                'T-79051-2025-03',
-                '15.05.2025',
-                'Bulancak Belediyesi Su ve Kanalizasyon İşletme Müdürlüğü',
-                'Biyokimyasal Oksijen İhtiyacı',
-                'mg/L',
-                '4.05',
-                '25',
-                'SM 5210 B',
-                '1'
-            ];
-            
-            $callback = function() use ($headers, $ornek) {
-                $file = fopen('php://output', 'w');
-                
-                // UTF-8 BOM ekle (Excel için)
-                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-                
-                // Başlıklar
-                fputcsv($file, $headers, ';');
-                
-                // Örnek veri
-                fputcsv($file, $ornek, ';');
-                
-                fclose($file);
-            };
-            
-            return response()->streamDownload($callback, $fileName, [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-                'Cache-Control' => 'max-age=0',
-                'Pragma' => 'public',
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Excel template hatası: ' . $e->getMessage());
-            
-            return redirect()->back()
-                ->with('error', 'Excel şablonu oluşturulurken hata oluştu: ' . $e->getMessage());
-        }
-    }
 }

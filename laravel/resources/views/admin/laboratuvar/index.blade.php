@@ -9,9 +9,6 @@
             <i class="bi bi-clipboard2-data"></i> Laboratuvar Analiz Raporları
         </h1>
         <div>
-            <a href="{{ route('admin.laboratuvar.excel-import') }}" class="btn btn-success me-2">
-                <i class="bi bi-file-earmark-excel"></i> Excel İçe Aktar
-            </a>
             <a href="{{ route('admin.laboratuvar.grafikler') }}" class="btn btn-info me-2">
                 <i class="bi bi-graph-up"></i> Grafikler
             </a>

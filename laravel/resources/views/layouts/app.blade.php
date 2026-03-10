@@ -120,10 +120,6 @@
                         <i class="bi bi-graph-up nav-icon"></i>
                         <span class="nav-text">Grafikler</span>
                     </a>
-                    <a class="nav-link {{ request()->routeIs('admin.laboratuvar.excel-import') ? 'active' : '' }}" href="{{ route('admin.laboratuvar.excel-import') }}">
-                        <i class="bi bi-file-earmark-excel nav-icon"></i>
-                        <span class="nav-text">Excel İçe Aktar</span>
-                    </a>
                 </div>
                 
                 <a class="nav-link {{ request()->routeIs('admin.kontroller.gecmis-tarih*') ? 'active' : '' }}" href="{{ route('admin.kontroller.gecmis-tarih') }}">

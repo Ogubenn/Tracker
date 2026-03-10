@@ -505,9 +505,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/laboratuvar/{id}/edit', [LaboratuvarController::class, 'edit'])->name('laboratuvar.edit');
     Route::put('/laboratuvar/{id}', [LaboratuvarController::class, 'update'])->name('laboratuvar.update');
     Route::delete('/laboratuvar/{id}', [LaboratuvarController::class, 'destroy'])->name('laboratuvar.destroy');
-    Route::get('/laboratuvar-excel-import', [LaboratuvarController::class, 'excelImport'])->name('laboratuvar.excel-import');
-    Route::post('/laboratuvar-excel-import', [LaboratuvarController::class, 'excelImportStore'])->name('laboratuvar.excel-import-store');
-    Route::get('/laboratuvar-excel-template', [LaboratuvarController::class, 'excelTemplate'])->name('laboratuvar.excel-template');
+    Route::get('/laboratuvar/{id}/pdf', [LaboratuvarController::class, 'pdfGoster'])->name('laboratuvar.pdf');
     Route::get('/laboratuvar-grafikler', [LaboratuvarController::class, 'grafikler'])->name('laboratuvar.grafikler');
     
     // Kontrol Maddeleri - Bulk delete ÖNCELİKLE tanımlanmalı
